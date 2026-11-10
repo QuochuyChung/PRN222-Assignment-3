@@ -36,17 +36,18 @@ public class SemanticChunker : IChunker
 
             if (content.Length <= chunkSize)
             {
+                int currentIdx = chunkIndex++;
                 chunks.Add(new ChunkDraft
                 {
                     DocumentId = doc.DocumentId,
-                    ChunkIndex = chunkIndex++,
+                    ChunkIndex = currentIdx,
                     Page = page.PageNumber,
                     Text = content,
                     Metadata = new Dictionary<string, string>
                     {
                         ["page"] = page.PageNumber.ToString(),
                         ["title"] = page.Title ?? string.Empty,
-                        ["chunk_index"] = chunkIndex.ToString(),
+                        ["chunk_index"] = currentIdx.ToString(),
                         ["length"] = content.Length.ToString()
                     }
                 });
@@ -62,17 +63,18 @@ public class SemanticChunker : IChunker
 
                     if (!string.IsNullOrWhiteSpace(chunkText))
                     {
+                        int currentIdx = chunkIndex++;
                         chunks.Add(new ChunkDraft
                         {
                             DocumentId = doc.DocumentId,
-                            ChunkIndex = chunkIndex++,
+                            ChunkIndex = currentIdx,
                             Page = page.PageNumber,
                             Text = chunkText,
                             Metadata = new Dictionary<string, string>
                             {
                                 ["page"] = page.PageNumber.ToString(),
                                 ["title"] = page.Title ?? string.Empty,
-                                ["chunk_index"] = chunkIndex.ToString(),
+                                ["chunk_index"] = currentIdx.ToString(),
                                 ["length"] = chunkText.Length.ToString()
                             }
                         });
@@ -83,7 +85,7 @@ public class SemanticChunker : IChunker
             }
         }
 
-        _logger.LogInformation("SemanticChunker.cs - App: Phân đoạn hoàn tất, documentId={DocId}, số chunk={Count}, chunkSize={ChunkSize}, overlap={Overlap}",
+        _logger.LogInformation("SemanticChunker.cs - App: Chunking complete, documentId={DocId}, chunks={Count}, chunkSize={ChunkSize}, overlap={Overlap}",
             doc.DocumentId, chunks.Count, chunkSize, overlap);
 
         return chunks;

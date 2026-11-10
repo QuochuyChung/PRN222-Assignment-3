@@ -12,6 +12,7 @@ public class AiInterviewOptions
     public QdrantOptions Qdrant { get; set; } = new();
     public EmbeddingOptions Embedding { get; set; } = new();
     public ChunkingOptions Chunking { get; set; } = new();
+    public WorkerOptions Worker { get; set; } = new();
 }
 
 public class MinioOptions
@@ -36,6 +37,7 @@ public class RedisOptions
     public string ConnectionString { get; set; } = "localhost:6379";
     public string DocsStreamKey { get; set; } = "docs-stream";
     public string DocsConsumerGroup { get; set; } = "docs-workers";
+    public string DocsDeadLetterStreamKey { get; set; } = "docs-stream-dlq";
 }
 
 public class QdrantOptions
@@ -61,3 +63,9 @@ public class ChunkingOptions
     public int ChunkOverlap { get; set; } = 100;
 }
 
+
+public class WorkerOptions
+{
+    public int MaxDeliveryAttempts { get; set; } = 3;
+    public int RetryBaseDelayMs { get; set; } = 1000;
+}

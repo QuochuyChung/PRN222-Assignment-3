@@ -36,7 +36,7 @@ public class InMemoryDocumentRepository : IDocumentRepository
     {
         document.UpdatedAt = DateTime.UtcNow;
         _docs[document.Id] = document;
-        _logger.LogInformation("InMemoryDocumentRepository.cs - App: Tạo tài liệu giả lập thành công, documentId={DocId}, fileName={FileName}",
+        _logger.LogInformation("InMemoryDocumentRepository.cs - App: Created in-memory document, documentId={DocId}, fileName={FileName}",
             document.Id, document.FileName);
         return Task.CompletedTask;
     }
@@ -57,7 +57,7 @@ public class InMemoryDocumentRepository : IDocumentRepository
             if (pageCount.HasValue) doc.PageCount = pageCount.Value;
             doc.UpdatedAt = DateTime.UtcNow;
 
-            _logger.LogInformation("InMemoryDocumentRepository.cs - App: Cập nhật trạng thái tài liệu giả lập thành công, documentId={DocId}, status={Status}",
+            _logger.LogInformation("InMemoryDocumentRepository.cs - App: Updated in-memory document status, documentId={DocId}, status={Status}",
                 documentId, status);
         }
 
@@ -67,7 +67,7 @@ public class InMemoryDocumentRepository : IDocumentRepository
     public Task DeleteAsync(string documentId, CancellationToken ct = default)
     {
         _docs.TryRemove(documentId, out _);
-        _logger.LogInformation("InMemoryDocumentRepository.cs - App: Xóa tài liệu giả lập thành công, documentId={DocId}", documentId);
+        _logger.LogInformation("InMemoryDocumentRepository.cs - App: Deleted in-memory document, documentId={DocId}", documentId);
         return Task.CompletedTask;
     }
 }

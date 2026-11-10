@@ -19,6 +19,7 @@ public class RedisDocumentStreamQueue : IDocumentStreamPublisher, IDocumentStrea
     private readonly ILogger<RedisDocumentStreamQueue> _logger;
     private readonly string _consumerName;
     private bool _groupInitialized;
+    private bool _pendingDrained;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
     public RedisDocumentStreamQueue(
@@ -49,7 +50,7 @@ public class RedisDocumentStreamQueue : IDocumentStreamPublisher, IDocumentStrea
             {
                 // Create consumer group if it doesn't already exist
                 await db.StreamCreateConsumerGroupAsync(streamKey, groupName, StreamPosition.Beginning, createStream: true);
-                _logger.LogInformation("RedisDocumentStreamQueue.cs - Redis: Tạo consumer group mới, stream={Stream}, group={Group}",
+                _logger.LogInformation("RedisDocumentStreamQueue.cs - Redis: Created consumer group, stream={Stream}, group={Group}",
                     streamKey, groupName);
             }
             catch (RedisServerException ex) when (ex.Message.Contains("BUSYGROUP"))
@@ -80,12 +81,12 @@ public class RedisDocumentStreamQueue : IDocumentStreamPublisher, IDocumentStrea
 
             var id = await db.StreamAddAsync(streamKey, entries);
 
-            _logger.LogInformation("RedisDocumentStreamQueue.cs - Redis: XADD thành công, stream={Stream}, id={Id}, documentId={DocId}",
+            _logger.LogInformation("RedisDocumentStreamQueue.cs - Redis: XADD succeeded, stream={Stream}, id={Id}, documentId={DocId}",
                 streamKey, id, message.DocumentId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "RedisDocumentStreamQueue.cs - Redis: XADD thất bại, stream={Stream}, documentId={DocId}",
+            _logger.LogError(ex, "RedisDocumentStreamQueue.cs - Redis: XADD failed, stream={Stream}, documentId={DocId}",
                 streamKey, message.DocumentId);
             throw;
         }
@@ -101,12 +102,29 @@ public class RedisDocumentStreamQueue : IDocumentStreamPublisher, IDocumentStrea
 
         try
         {
-            var entries = await db.StreamReadGroupAsync(
-                streamKey,
-                groupName,
-                _consumerName,
-                StreamPosition.NewMessages,
-                count);
+            // On startup, first re-read messages that were delivered to this consumer
+            // but never acknowledged (e.g. the pod crashed mid-processing).
+            // Reading from "0" returns this consumer's pending entries; once that is empty
+            // we switch to ">" (new messages only).
+            StreamEntry[] entries;
+            if (!_pendingDrained)
+            {
+                entries = await db.StreamReadGroupAsync(streamKey, groupName, _consumerName, StreamPosition.Beginning, count);
+                if (entries == null || entries.Length == 0)
+                {
+                    _pendingDrained = true;
+                    entries = await db.StreamReadGroupAsync(streamKey, groupName, _consumerName, StreamPosition.NewMessages, count);
+                }
+                else
+                {
+                    _logger.LogInformation("RedisDocumentStreamQueue.cs - Redis: Recovered pending messages, stream={Stream}, count={Count}",
+                        streamKey, entries.Length);
+                }
+            }
+            else
+            {
+                entries = await db.StreamReadGroupAsync(streamKey, groupName, _consumerName, StreamPosition.NewMessages, count);
+            }
 
             var list = new List<DocStreamMessageEnvelope>();
             if (entries != null)
@@ -133,7 +151,7 @@ public class RedisDocumentStreamQueue : IDocumentStreamPublisher, IDocumentStrea
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "RedisDocumentStreamQueue.cs - Redis: Đọc stream thất bại, stream={Stream}, group={Group}",
+            _logger.LogError(ex, "RedisDocumentStreamQueue.cs - Redis: Stream read failed, stream={Stream}, group={Group}",
                 streamKey, groupName);
             return Array.Empty<DocStreamMessageEnvelope>();
         }
@@ -149,15 +167,46 @@ public class RedisDocumentStreamQueue : IDocumentStreamPublisher, IDocumentStrea
         {
             await db.StreamAcknowledgeAsync(streamKey, groupName, messageId);
 
-            _logger.LogInformation("RedisDocumentStreamQueue.cs - Redis: XACK thành công, stream={Stream}, group={Group}, messageId={MsgId}",
+            _logger.LogInformation("RedisDocumentStreamQueue.cs - Redis: XACK succeeded, stream={Stream}, group={Group}, messageId={MsgId}",
                 streamKey, groupName, messageId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "RedisDocumentStreamQueue.cs - Redis: XACK thất bại, stream={Stream}, group={Group}, messageId={MsgId}",
+            _logger.LogError(ex, "RedisDocumentStreamQueue.cs - Redis: XACK failed, stream={Stream}, group={Group}, messageId={MsgId}",
                 streamKey, groupName, messageId);
             throw;
         }
     }
-}
 
+    public async Task DeadLetterAsync(DocStreamMessageEnvelope envelope, string reason, CancellationToken ct = default)
+    {
+        var db = _redis.GetDatabase();
+        string dlqKey = _options.DocsDeadLetterStreamKey;
+
+        try
+        {
+            var entries = new[]
+            {
+                new NameValueEntry("documentId", envelope.Message.DocumentId),
+                new NameValueEntry("storageKey", envelope.Message.StorageKey),
+                new NameValueEntry("originalMessageId", envelope.MessageId),
+                new NameValueEntry("reason", reason),
+                new NameValueEntry("failedAt", DateTime.UtcNow.ToString("O"))
+            };
+
+            var id = await db.StreamAddAsync(dlqKey, entries);
+
+            _logger.LogWarning("RedisDocumentStreamQueue.cs - Redis: Moved message to dead-letter stream, stream={Stream}, id={Id}, originalMessageId={MsgId}, documentId={DocId}",
+                dlqKey, id, envelope.MessageId, envelope.Message.DocumentId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RedisDocumentStreamQueue.cs - Redis: Failed to write dead-letter message, stream={Stream}, messageId={MsgId}",
+                dlqKey, envelope.MessageId);
+            throw;
+        }
+
+        // Only remove from the main stream once the dead-letter copy is safely stored.
+        await AcknowledgeAsync(envelope.MessageId, ct);
+    }
+}

@@ -43,19 +43,19 @@ public class IndexModel : PageModel
     {
         if (string.IsNullOrEmpty(documentId))
         {
-            ErrorMessage = "ID tài liệu không hợp lệ.";
+            ErrorMessage = "Invalid document ID.";
             return RedirectToPage();
         }
 
         try
         {
             await _docService.DeleteDocumentAsync(documentId, ct);
-            StatusMessage = "Xóa tài liệu và dữ liệu vector liên quan thành công.";
+            StatusMessage = "Document and its vectors were deleted.";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "IndexModel.cs - App: Lỗi khi xóa tài liệu, documentId={DocId}", documentId);
-            ErrorMessage = $"Không thể xóa tài liệu: {ex.Message}";
+            _logger.LogError(ex, "IndexModel.cs - App: Failed to delete document, documentId={DocId}", documentId);
+            ErrorMessage = $"Could not delete the document: {ex.Message}";
         }
 
         return RedirectToPage();
@@ -65,19 +65,19 @@ public class IndexModel : PageModel
     {
         if (string.IsNullOrEmpty(documentId))
         {
-            ErrorMessage = "ID tài liệu không hợp lệ.";
+            ErrorMessage = "Invalid document ID.";
             return RedirectToPage();
         }
 
         try
         {
             await _docService.ReindexDocumentAsync(documentId, ct);
-            StatusMessage = "Đã đưa tài liệu vào hàng đợi xử lý lại (Re-index).";
+            StatusMessage = "Document queued for re-indexing.";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "IndexModel.cs - App: Lỗi khi re-index tài liệu, documentId={DocId}", documentId);
-            ErrorMessage = $"Không thể re-index: {ex.Message}";
+            _logger.LogError(ex, "IndexModel.cs - App: Failed to re-index document, documentId={DocId}", documentId);
+            ErrorMessage = $"Could not re-index: {ex.Message}";
         }
 
         return RedirectToPage();

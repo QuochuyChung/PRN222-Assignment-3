@@ -114,7 +114,7 @@ public class MongoDocumentRepository : IDocumentRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Lấy tài liệu thất bại, documentId={DocId}", documentId);
+            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Failed to get document, documentId={DocId}", documentId);
             throw;
         }
     }
@@ -132,7 +132,7 @@ public class MongoDocumentRepository : IDocumentRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Lấy danh sách tài liệu thất bại");
+            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Failed to list documents");
             throw;
         }
     }
@@ -144,12 +144,12 @@ public class MongoDocumentRepository : IDocumentRepository
             var entity = MongoDocumentEntity.FromModel(document);
             await _collection.InsertOneAsync(entity, cancellationToken: ct);
 
-            _logger.LogInformation("MongoDocumentRepository.cs - MongoDB: Thêm tài liệu mới thành công, documentId={DocId}, fileName={FileName}",
+            _logger.LogInformation("MongoDocumentRepository.cs - MongoDB: Inserted document, documentId={DocId}, fileName={FileName}",
                 document.Id, document.FileName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Thêm tài liệu thất bại, documentId={DocId}", document.Id);
+            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Failed to insert document, documentId={DocId}", document.Id);
             throw;
         }
     }
@@ -180,12 +180,12 @@ public class MongoDocumentRepository : IDocumentRepository
 
             await _collection.UpdateOneAsync(d => d.Id == documentId, update, cancellationToken: ct);
 
-            _logger.LogInformation("MongoDocumentRepository.cs - MongoDB: Cập nhật trạng thái thành công, documentId={DocId}, status={Status}",
+            _logger.LogInformation("MongoDocumentRepository.cs - MongoDB: Updated status, documentId={DocId}, status={Status}",
                 documentId, status);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Cập nhật trạng thái thất bại, documentId={DocId}, status={Status}",
+            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Failed to update status, documentId={DocId}, status={Status}",
                 documentId, status);
             throw;
         }
@@ -196,11 +196,11 @@ public class MongoDocumentRepository : IDocumentRepository
         try
         {
             await _collection.DeleteOneAsync(d => d.Id == documentId, ct);
-            _logger.LogInformation("MongoDocumentRepository.cs - MongoDB: Xóa tài liệu thành công, documentId={DocId}", documentId);
+            _logger.LogInformation("MongoDocumentRepository.cs - MongoDB: Deleted document, documentId={DocId}", documentId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Xóa tài liệu thất bại, documentId={DocId}", documentId);
+            _logger.LogError(ex, "MongoDocumentRepository.cs - MongoDB: Failed to delete document, documentId={DocId}", documentId);
             throw;
         }
     }

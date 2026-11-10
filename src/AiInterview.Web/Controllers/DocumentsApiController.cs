@@ -29,7 +29,7 @@ public class DocumentsApiController : ControllerBase
         var doc = await _repo.GetByIdAsync(id, ct);
         if (doc == null)
         {
-            return NotFound(new { message = $"Không tìm thấy tài liệu ID: {id}" });
+            return NotFound(new { message = $"Document not found: {id}" });
         }
 
         return Ok(new

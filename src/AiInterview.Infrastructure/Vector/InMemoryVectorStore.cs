@@ -28,7 +28,7 @@ public class InMemoryVectorStore : IVectorStore
         }
 
         string docId = points.FirstOrDefault()?.DocumentId ?? string.Empty;
-        _logger.LogInformation("InMemoryVectorStore.cs - App: Upsert vector giả lập thành công, documentId={DocId}, số điểm={Count}",
+        _logger.LogInformation("InMemoryVectorStore.cs - App: Upserted in-memory vectors, documentId={DocId}, points={Count}",
             docId, points.Count);
 
         return Task.CompletedTask;
@@ -71,7 +71,7 @@ public class InMemoryVectorStore : IVectorStore
             _points.TryRemove(key, out _);
         }
 
-        _logger.LogInformation("InMemoryVectorStore.cs - App: Xóa vector theo tài liệu thành công, documentId={DocId}, số điểm xóa={Count}",
+        _logger.LogInformation("InMemoryVectorStore.cs - App: Deleted in-memory vectors, documentId={DocId}, removed={Count}",
             documentId, keysToRemove.Count);
 
         return Task.CompletedTask;

@@ -34,7 +34,7 @@ public class FakeEmbeddingService : IEmbeddingService
             result.Add(vector);
         }
 
-        _logger.LogInformation("FakeEmbeddingService.cs - Gemini: Sinh embedding giả lập thành công, số lượng={Count}, số chiều={Dimensions}",
+        _logger.LogInformation("FakeEmbeddingService.cs - Gemini: Generated fake embeddings, count={Count}, dimensions={Dimensions}",
             texts.Count, _dimensions);
 
         return Task.FromResult<IReadOnlyList<float[]>>(result);

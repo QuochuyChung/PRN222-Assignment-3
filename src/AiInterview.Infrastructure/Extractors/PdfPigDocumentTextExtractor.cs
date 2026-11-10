@@ -51,12 +51,12 @@ public class PdfPigDocumentTextExtractor : IDocumentTextExtractor
             // PDF scan detection: If entire document contains zero or negligible text (< 10 chars)
             if (totalTextLength < 10)
             {
-                _logger.LogWarning("PdfPigDocumentTextExtractor.cs - App: Phát hiện PDF scan hoặc không có lớp text, fileName={FileName}, totalTextLength={Length}",
+                _logger.LogWarning("PdfPigDocumentTextExtractor.cs - App: Scanned PDF or missing text layer detected, fileName={FileName}, totalTextLength={Length}",
                     fileName, totalTextLength);
-                throw new ScannedPdfException("Tài liệu PDF là bản scan dạng hình ảnh hoặc không có lớp văn bản (text layer). Hệ thống yêu cầu tài liệu có thể trích xuất văn bản.");
+                throw new ScannedPdfException("This PDF looks like a scan (image only, no text layer). Upload a PDF with selectable text.");
             }
 
-            _logger.LogInformation("PdfPigDocumentTextExtractor.cs - App: Trích xuất PDF thành công, fileName={FileName}, số trang={PageCount}, tổng ký tự={Chars}",
+            _logger.LogInformation("PdfPigDocumentTextExtractor.cs - App: Extracted PDF, fileName={FileName}, pages={PageCount}, chars={Chars}",
                 fileName, doc.Pages.Count, totalTextLength);
 
             return Task.FromResult(doc);
@@ -67,7 +67,7 @@ public class PdfPigDocumentTextExtractor : IDocumentTextExtractor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "PdfPigDocumentTextExtractor.cs - App: Lỗi khi đọc file PDF, fileName={FileName}", fileName);
+            _logger.LogError(ex, "PdfPigDocumentTextExtractor.cs - App: Failed to read PDF, fileName={FileName}", fileName);
             throw;
         }
     }

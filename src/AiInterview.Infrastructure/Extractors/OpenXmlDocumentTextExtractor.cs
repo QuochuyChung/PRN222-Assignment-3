@@ -53,7 +53,7 @@ public class OpenXmlDocumentTextExtractor : IDocumentTextExtractor
         var body = wordDoc.MainDocumentPart?.Document?.Body;
         if (body == null)
         {
-            _logger.LogWarning("OpenXmlDocumentTextExtractor.cs - App: File Word không có phần thân (body), fileName={FileName}", fileName);
+            _logger.LogWarning("OpenXmlDocumentTextExtractor.cs - App: Word file has no body, fileName={FileName}", fileName);
             return doc;
         }
 
@@ -89,7 +89,7 @@ public class OpenXmlDocumentTextExtractor : IDocumentTextExtractor
             });
         }
 
-        _logger.LogInformation("OpenXmlDocumentTextExtractor.cs - App: Trích xuất Word thành công, fileName={FileName}, số phần/trang={PageCount}",
+        _logger.LogInformation("OpenXmlDocumentTextExtractor.cs - App: Extracted Word document, fileName={FileName}, sections={PageCount}",
             fileName, doc.Pages.Count);
 
         return doc;
@@ -110,7 +110,7 @@ public class OpenXmlDocumentTextExtractor : IDocumentTextExtractor
         var presentationPart = presentationDoc.PresentationPart;
         if (presentationPart == null || presentationPart.Presentation == null)
         {
-            _logger.LogWarning("OpenXmlDocumentTextExtractor.cs - App: File PowerPoint không có PresentationPart, fileName={FileName}", fileName);
+            _logger.LogWarning("OpenXmlDocumentTextExtractor.cs - App: PowerPoint file has no PresentationPart, fileName={FileName}", fileName);
             return doc;
         }
 
@@ -150,7 +150,7 @@ public class OpenXmlDocumentTextExtractor : IDocumentTextExtractor
             slideIndex++;
         }
 
-        _logger.LogInformation("OpenXmlDocumentTextExtractor.cs - App: Trích xuất PowerPoint thành công, fileName={FileName}, số slide={SlideCount}",
+        _logger.LogInformation("OpenXmlDocumentTextExtractor.cs - App: Extracted PowerPoint, fileName={FileName}, slides={SlideCount}",
             fileName, doc.Pages.Count);
 
         return doc;

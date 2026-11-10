@@ -55,7 +55,7 @@ public class GeminiEmbeddingService : IEmbeddingService
     {
         string model = _options.ModelName;
         string? apiKey = _options.ApiKey;
-        string endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:batchEmbedContents?key={apiKey}";
+        string endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:batchEmbedContents";
 
         int maxRetries = Math.Max(1, _options.MaxRetries);
         int backoffMs = Math.Max(200, _options.InitialBackoffMs);
@@ -92,11 +92,18 @@ public class GeminiEmbeddingService : IEmbeddingService
 
             try
             {
-                using var response = await _httpClient.PostAsJsonAsync(endpoint, payload, ct);
+                using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+                if (!string.IsNullOrEmpty(apiKey))
+                {
+                    request.Headers.Add("x-goog-api-key", apiKey);
+                }
+                request.Content = JsonContent.Create(payload);
+
+                using var response = await _httpClient.SendAsync(request, ct);
 
                 if (response.StatusCode == HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500)
                 {
-                    _logger.LogWarning("GeminiEmbeddingService.cs - Gemini: Bị giới hạn tốc độ hoặc lỗi máy chủ HTTP {StatusCode}, thử lại lần {Attempt}/{Max} sau {DelayMs}ms",
+                    _logger.LogWarning("GeminiEmbeddingService.cs - Gemini: Rate limited or server error HTTP {StatusCode}, retry {Attempt}/{Max} in {DelayMs}ms",
                         response.StatusCode, attempt, maxRetries, backoffMs);
 
                     if (attempt == maxRetries)
@@ -118,27 +125,27 @@ public class GeminiEmbeddingService : IEmbeddingService
                 }
 
                 var batchVectors = jsonResult.Embeddings.Select(e => e.Values).ToList();
-                _logger.LogInformation("GeminiEmbeddingService.cs - Gemini: Embed batch thành công, số văn bản={Count}, model={Model}",
+                _logger.LogInformation("GeminiEmbeddingService.cs - Gemini: Embedded batch, texts={Count}, model={Model}",
                     texts.Count, model);
 
                 return batchVectors;
             }
             catch (HttpRequestException ex) when (attempt < maxRetries)
             {
-                _logger.LogWarning(ex, "GeminiEmbeddingService.cs - Gemini: Lỗi kết nối HTTP, thử lại lần {Attempt}/{Max} sau {DelayMs}ms",
+                _logger.LogWarning(ex, "GeminiEmbeddingService.cs - Gemini: HTTP connection error, retry {Attempt}/{Max} in {DelayMs}ms",
                     attempt, maxRetries, backoffMs);
                 await Task.Delay(backoffMs, ct);
                 backoffMs *= 2;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GeminiEmbeddingService.cs - Gemini: Embed thất bại sau {Attempt} lần thử, model={Model}",
+                _logger.LogError(ex, "GeminiEmbeddingService.cs - Gemini: Embedding failed after {Attempt} attempts, model={Model}",
                     attempt, model);
                 throw;
             }
         }
 
-        throw new InvalidOperationException($"Không thể tạo embedding từ Gemini sau {maxRetries} lần thử.");
+        throw new InvalidOperationException($"Could not create embeddings with Gemini after {maxRetries} attempts.");
     }
 
     private class GeminiBatchEmbedResponse

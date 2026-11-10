@@ -1,93 +1,68 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "AI Interview Dashboard";
+    ViewData["Title"] = "Overview";
 }
 
-<div class="container-fluid py-3">
-    <!-- Welcome Hero -->
-    <div class="p-4 mb-4 bg-primary text-white rounded-3 shadow-sm d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="display-6 fw-bold mb-2">Hệ thống Phỏng vấn Ảo AI</h1>
-            <p class="fs-6 mb-0 opacity-75">
-                Nhóm 3: Lõi phỏng vấn AI + RAG (Đọc câu hỏi TTS, STT, hỏi xoáy phỏng vấn, trích xuất tài liệu)
-            </p>
-        </div>
-        <div class="d-none d-md-block text-end">
-            <span class="badge bg-light text-primary fs-6 px-3 py-2">PRN222 Assignment 3</span>
-        </div>
+<div class="page-head">
+    <div>
+        <div class="eyebrow">Group 3 · Interview core + RAG</div>
+        <h1 class="page-title">AI Interview</h1>
+        <p class="page-lede">
+            A virtual oral examiner: it reads questions aloud, listens to answers, asks follow-ups,
+            and builds its question bank from your course material.
+        </p>
     </div>
-
-    <!-- Quick Cards Row -->
-    <div class="row g-4 mb-4">
-        <!-- Dev A: Document Ingestion -->
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100 shadow-sm border-0 border-start border-primary border-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="text-muted small fw-semibold">DEV A — MODULE</span>
-                        <span class="badge bg-primary-subtle text-primary">Sẵn sàng</span>
-                    </div>
-                    <h5 class="card-title fw-bold">Document Ingestion</h5>
-                    <p class="card-text text-secondary small">
-                        Upload PPTX/PDF/DOCX, trích xuất text, chunking, Gemini embedding và Qdrant vector store.
-                    </p>
-                    <a asp-page="/Documents/Index" class="btn btn-sm btn-primary">
-                        <i class="bi bi-arrow-right me-1"></i> Quản lý tài liệu
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dev B: Question Bank -->
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100 shadow-sm border-0 border-start border-info border-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="text-muted small fw-semibold">DEV B — MODULE</span>
-                        <span class="badge bg-secondary-subtle text-secondary">Đang chờ</span>
-                    </div>
-                    <h5 class="card-title fw-bold">Ngân hàng câu hỏi</h5>
-                    <p class="card-text text-secondary small">
-                        Truy xuất chunk từ Qdrant, sinh câu hỏi bằng LLM theo thang Bloom, duyệt & sửa câu hỏi.
-                    </p>
-                    <button class="btn btn-sm btn-outline-secondary" disabled>Chờ Dev B</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dev C: Interview Engine -->
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100 shadow-sm border-0 border-start border-warning border-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="text-muted small fw-semibold">DEV C — MODULE</span>
-                        <span class="badge bg-secondary-subtle text-secondary">Đang chờ</span>
-                    </div>
-                    <h5 class="card-title fw-bold">Interview Engine</h5>
-                    <p class="card-text text-secondary small">
-                        State machine phiên thi, quản lý state Redis, hỏi xoáy bằng LLM, luật cứng thời gian.
-                    </p>
-                    <button class="btn btn-sm btn-outline-secondary" disabled>Chờ Dev C</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dev D: Interview UI -->
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100 shadow-sm border-0 border-start border-success border-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="text-muted small fw-semibold">DEV D — MODULE</span>
-                        <span class="badge bg-secondary-subtle text-secondary">Đang chờ</span>
-                    </div>
-                    <h5 class="card-title fw-bold">Phòng phỏng vấn</h5>
-                    <p class="card-text text-secondary small">
-                        Giao diện tương tác giọng nói, TTS đọc đề, STT nhận diện câu trả lời, live countdown.
-                    </p>
-                    <button class="btn btn-sm btn-outline-secondary" disabled>Chờ Dev D</button>
-                </div>
-            </div>
-        </div>
+    <div class="page-actions">
+        <a asp-page="/Documents/Upload" class="btn btn-ink btn-app">
+            <i class="bi bi-upload" aria-hidden="true"></i><span>Upload material</span>
+        </a>
     </div>
 </div>
+
+<section class="panel" aria-labelledby="modulesTitle">
+    <div class="panel-head">
+        <h2 class="panel-title" id="modulesTitle">Modules</h2>
+        <span class="live" data-state="connected"><span class="live-dot"></span>1 of 4 live</span>
+    </div>
+    <div class="module-list">
+        <article class="module">
+            <div class="module-top">
+                <span class="module-owner">Dev A</span>
+                <span class="chip chip-ok">Live</span>
+            </div>
+            <h3>Document ingestion</h3>
+            <p>Upload PPTX, PDF or DOCX. Text is extracted, chunked, embedded with Gemini and stored in Qdrant.</p>
+            <a asp-page="/Documents/Index" class="btn btn-line btn-app btn-sm">
+                <span>Open documents</span><i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+        </article>
+
+        <article class="module">
+            <div class="module-top">
+                <span class="module-owner">Dev B</span>
+                <span class="chip chip-muted">Planned</span>
+            </div>
+            <h3>Question bank</h3>
+            <p>Retrieves chunks from Qdrant and drafts questions by Bloom level for instructors to review and edit.</p>
+        </article>
+
+        <article class="module">
+            <div class="module-top">
+                <span class="module-owner">Dev C</span>
+                <span class="chip chip-muted">Planned</span>
+            </div>
+            <h3>Interview engine</h3>
+            <p>Session state machine backed by Redis, LLM follow-up questions and hard time limits.</p>
+        </article>
+
+        <article class="module">
+            <div class="module-top">
+                <span class="module-owner">Dev D</span>
+                <span class="chip chip-muted">Planned</span>
+            </div>
+            <h3>Interview room</h3>
+            <p>Voice interface with text-to-speech prompts, speech-to-text answers and a live countdown.</p>
+        </article>
+    </div>
+</section>

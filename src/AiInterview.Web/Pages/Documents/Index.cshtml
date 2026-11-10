@@ -1,246 +1,274 @@
 @page
 @model AiInterview.Web.Pages.Documents.IndexModel
+@using AiInterview.Core.Models
 @{
-    ViewData["Title"] = "Quản lý Tài liệu Môn học";
+    ViewData["Title"] = "Documents";
+    ViewData["Section"] = "Workspace";
+
+    int total = Model.Documents.Count;
+    int ready = Model.Documents.Count(d => d.Status == DocumentStatus.Success);
+    int processing = Model.Documents.Count(d => d.Status == DocumentStatus.Processing);
+    int failed = Model.Documents.Count(d => d.Status == DocumentStatus.Failed);
+
+    static string FormatSize(long bytes)
+    {
+        double kb = bytes / 1024.0;
+        return kb >= 1024 ? $"{kb / 1024.0:F2} MB" : $"{kb:F1} KB";
+    }
 }
 
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 fw-bold mb-1">
-                <i class="bi bi-folder2-open text-primary me-2"></i>Quản lý Tài liệu & Ingestion
-            </h1>
-            <p class="text-muted mb-0">
-                Tải lên tài liệu (.pptx, .pdf, .docx), tự động trích xuất văn bản, phân đoạn (chunking), tạo embedding và lưu trữ vector Qdrant.
-            </p>
-        </div>
-        <div class="d-flex gap-2">
-            <a asp-page="/Documents/Upload" class="btn btn-primary d-flex align-items-center gap-2">
-                <i class="bi bi-cloud-arrow-up-fill"></i>
-                <span>Tải lên tài liệu mới</span>
-            </a>
-            <button class="btn btn-outline-secondary" onclick="location.reload();" title="Làm mới trang">
-                <i class="bi bi-arrow-clockwise"></i>
-            </button>
-        </div>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Course documents</h1>
+        <p class="page-lede">
+            Slides, handouts and textbooks that the question bank draws from.
+            Each file is extracted, chunked, embedded and indexed in the background.
+        </p>
     </div>
-
-    @if (!string.IsNullOrEmpty(Model.StatusMessage))
-    {
-        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-            <i class="bi bi-check-circle-fill fs-5"></i>
-            <div>@Model.StatusMessage</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-            <div>@Model.ErrorMessage</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    <!-- Live Ingestion Status Banner -->
-    <div class="card shadow-sm border-0 mb-4 bg-light">
-        <div class="card-body d-flex justify-content-between align-items-center py-2 px-3">
-            <div class="d-flex align-items-center gap-2">
-                <span class="spinner-grow spinner-grow-sm text-success" id="signalrIndicator" role="status"></span>
-                <span class="small fw-semibold text-secondary" id="signalrText">SignalR: Đang kết nối cập nhật tiến độ theo thời gian thực...</span>
-            </div>
-            <span class="badge bg-secondary" id="totalDocsBadge">Tổng: @Model.Documents.Count tài liệu</span>
-        </div>
-    </div>
-
-    <!-- Documents Table Card -->
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-0">
-            @if (Model.Documents.Count == 0)
-            {
-                <div class="text-center py-5">
-                    <i class="bi bi-file-earmark-arrow-up display-1 text-muted opacity-50"></i>
-                    <h5 class="mt-3 text-muted">Chưa có tài liệu nào trong hệ thống</h5>
-                    <p class="text-secondary small">Hãy tải lên slide bài giảng PPTX, giáo trình PDF hoặc tài liệu Word DOCX để bắt đầu.</p>
-                    <a asp-page="/Documents/Upload" class="btn btn-primary mt-2">
-                        <i class="bi bi-upload me-1"></i> Tải tài liệu đầu tiên
-                    </a>
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="documentsTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 35%;">Tên tài liệu</th>
-                                <th style="width: 12%;">Dung lượng</th>
-                                <th style="width: 10%;">Số trang / slide</th>
-                                <th style="width: 10%;">Số Chunk</th>
-                                <th style="width: 18%;">Trạng thái Ingestion</th>
-                                <th style="width: 15%; text-align: right;">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var doc in Model.Documents)
-                            {
-                                string ext = System.IO.Path.GetExtension(doc.FileName).ToLowerInvariant();
-                                string iconClass = ext switch
-                                {
-                                    ".pdf" => "bi-filetype-pdf text-danger",
-                                    ".pptx" => "bi-filetype-pptx text-warning",
-                                    ".docx" => "bi-filetype-docx text-primary",
-                                    _ => "bi-file-earmark-text text-secondary"
-                                };
-
-                                string rowId = $"doc-row-{doc.Id}";
-
-                                <tr id="@rowId" data-document-id="@doc.Id">
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="bi @iconClass fs-2 me-3"></i>
-                                            <div>
-                                                <div class="fw-bold text-dark text-break">@doc.FileName</div>
-                                                <small class="text-muted d-block font-monospace" style="font-size: 0.75rem;">ID: @doc.Id</small>
-                                                <small class="text-secondary" style="font-size: 0.75rem;">
-                                                    <i class="bi bi-clock me-1"></i>@doc.UploadedAt.ToString("dd/MM/yyyy HH:mm:ss") UTC
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @{
-                                            double sizeKb = doc.Size / 1024.0;
-                                            string sizeText = sizeKb > 1024 ? $"{(sizeKb / 1024.0):F2} MB" : $"{sizeKb:F1} KB";
-                                        }
-                                        <span class="badge bg-light text-dark border">@sizeText</span>
-                                    </td>
-                                    <td>
-                                        <span class="fw-semibold page-count">@(doc.PageCount > 0 ? doc.PageCount.ToString() : "-")</span>
-                                    </td>
-                                    <td>
-                                        <span class="fw-semibold chunk-count">@(doc.ChunkCount > 0 ? doc.ChunkCount.ToString() : "-")</span>
-                                    </td>
-                                    <td>
-                                        <div class="status-container">
-                                            @if (doc.Status == AiInterview.Core.Models.DocumentStatus.Success)
-                                            {
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 d-inline-flex align-items-center gap-1">
-                                                    <i class="bi bi-check-circle-fill"></i> Hoàn thành
-                                                </span>
-                                            }
-                                            else if (doc.Status == AiInterview.Core.Models.DocumentStatus.Processing)
-                                            {
-                                                <div>
-                                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle py-1 px-2 d-inline-flex align-items-center gap-1">
-                                                        <span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý
-                                                    </span>
-                                                    <div class="progress mt-1" style="height: 6px; width: 140px;">
-                                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 50%"></div>
-                                                    </div>
-                                                    <small class="text-muted step-text" style="font-size: 0.7rem;">Đang phân tích...</small>
-                                                </div>
-                                            }
-                                            else if (doc.Status == AiInterview.Core.Models.DocumentStatus.Failed)
-                                            {
-                                                <div>
-                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2 d-inline-flex align-items-center gap-1">
-                                                        <i class="bi bi-x-circle-fill"></i> Thất bại
-                                                    </span>
-                                                    @if (!string.IsNullOrEmpty(doc.ErrorMessage))
-                                                    {
-                                                        <small class="d-block text-danger mt-1 text-truncate" style="max-width: 220px;" title="@doc.ErrorMessage">
-                                                            <i class="bi bi-info-circle me-1"></i>@doc.ErrorMessage
-                                                        </small>
-                                                    }
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle py-1 px-2">
-                                                    @doc.Status
-                                                </span>
-                                            }
-                                        </div>
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="btn-group btn-group-sm">
-                                            <form method="post" asp-page-handler="Reindex" asp-route-documentId="@doc.Id" class="d-inline">
-                                                <button type="submit" class="btn btn-outline-primary" title="Xử lý lại (Re-index)">
-                                                    <i class="bi bi-arrow-repeat"></i> Re-index
-                                                </button>
-                                            </form>
-                                            <form method="post" asp-page-handler="Delete" asp-route-documentId="@doc.Id" class="d-inline ms-1" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài liệu này cùng toàn bộ vector embeddings liên quan không?');">
-                                                <button type="submit" class="btn btn-outline-danger" title="Xóa tài liệu và vector">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
+    <div class="page-actions">
+        <button type="button" class="btn btn-line btn-app btn-icon" onclick="location.reload();" title="Refresh" aria-label="Refresh list">
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+        </button>
+        <a asp-page="/Documents/Upload" class="btn btn-ink btn-app">
+            <i class="bi bi-upload" aria-hidden="true"></i><span>Upload document</span>
+        </a>
     </div>
 </div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="notice notice-ok alert alert-dismissible fade show" role="status">
+        <i class="bi bi-check2-circle" aria-hidden="true"></i>
+        <div>@Model.StatusMessage</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="notice notice-err alert alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+        <div>@Model.ErrorMessage</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
+    </div>
+}
+
+<div class="stat-row" aria-label="Summary">
+    <div class="stat"><div class="stat-label">Total</div><div class="stat-value" id="statTotal">@total</div></div>
+    <div class="stat"><div class="stat-label">Indexed</div><div class="stat-value" id="statReady">@ready</div></div>
+    <div class="stat"><div class="stat-label">Processing</div><div class="stat-value" id="statProcessing">@processing</div></div>
+    <div class="stat"><div class="stat-label">Failed</div><div class="stat-value" id="statFailed">@failed</div></div>
+</div>
+
+<section class="panel" aria-labelledby="docsTitle">
+    <div class="panel-head">
+        <h2 class="panel-title" id="docsTitle">All documents</h2>
+        <span class="live" id="liveStatus" data-state="connecting" aria-live="polite">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="liveText">Connecting to live updates…</span>
+        </span>
+    </div>
+
+    @if (total == 0)
+    {
+        <div class="empty">
+            <div class="empty-art" aria-hidden="true"><i class="bi bi-file-earmark-plus"></i></div>
+            <h2>No documents yet</h2>
+            <p>Upload lecture slides (PPTX), a textbook (PDF) or notes (DOCX) to start building the question bank.</p>
+            <a asp-page="/Documents/Upload" class="btn btn-ink btn-app">
+                <i class="bi bi-upload" aria-hidden="true"></i><span>Upload your first document</span>
+            </a>
+        </div>
+    }
+    else
+    {
+        <table class="doc-table" id="documentsTable">
+            <thead>
+                <tr>
+                    <th scope="col">Document</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Pages</th>
+                    <th scope="col">Chunks</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="col-actions"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var doc in Model.Documents)
+                {
+                    string ext = System.IO.Path.GetExtension(doc.FileName).TrimStart('.').ToLowerInvariant();
+
+                    <tr id="doc-row-@doc.Id" data-document-id="@doc.Id" data-status="@doc.Status">
+                        <td class="col-file">
+                            <div class="file-cell">
+                                <span class="file-type" data-ext="@ext" aria-hidden="true">@ext.ToUpperInvariant()</span>
+                                <div class="min-w-0">
+                                    <div class="file-name">@doc.FileName</div>
+                                    <div class="file-meta">
+                                        <span title="Uploaded (UTC)">@doc.UploadedAt.ToString("dd MMM yyyy, HH:mm") UTC</span>
+                                        <span class="mono" title="Document ID">@doc.Id[..Math.Min(8, doc.Id.Length)]</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Size" class="num">@FormatSize(doc.Size)</td>
+                        <td data-label="Pages" class="num page-count">@(doc.PageCount > 0 ? doc.PageCount.ToString() : "–")</td>
+                        <td data-label="Chunks" class="num chunk-count">@(doc.ChunkCount > 0 ? doc.ChunkCount.ToString() : "–")</td>
+                        <td data-label="Status" class="col-status">
+                            <div class="status-container">
+                                @if (doc.Status == DocumentStatus.Success)
+                                {
+                                    <span class="chip chip-ok">Indexed</span>
+                                }
+                                else if (doc.Status == DocumentStatus.Processing)
+                                {
+                                    <span class="chip chip-warn">Processing</span>
+                                    <div class="meter" role="progressbar" aria-label="Processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="5">
+                                        <div class="meter-fill"></div>
+                                    </div>
+                                    <span class="step-text">Queued</span>
+                                }
+                                else if (doc.Status == DocumentStatus.Failed)
+                                {
+                                    <span class="chip chip-err">Failed</span>
+                                    @if (!string.IsNullOrEmpty(doc.ErrorMessage))
+                                    {
+                                        <span class="error-text">@doc.ErrorMessage</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="chip chip-muted">@doc.Status</span>
+                                }
+                            </div>
+                        </td>
+                        <td class="col-actions">
+                            <div class="row-actions">
+                                <form method="post" asp-page-handler="Reindex" asp-route-documentId="@doc.Id">
+                                    <button type="submit" class="btn btn-line btn-app btn-sm" title="Run extraction and embedding again">
+                                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>Re-index</span>
+                                    </button>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" asp-route-documentId="@doc.Id"
+                                      onsubmit="return confirm('Delete this document and all of its vectors? This cannot be undone.');">
+                                    <button type="submit" class="btn btn-danger-line btn-app btn-sm" title="Delete document and vectors" aria-label="Delete @doc.FileName">
+                                        <i class="bi bi-trash3" aria-hidden="true"></i><span class="d-md-none">Delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // Setup SignalR connection for Realtime Ingestion updates
+            const { escapeHtml } = window.aiInterview;
+            const liveStatus = document.getElementById("liveStatus");
+            const liveText = document.getElementById("liveText");
+            const POLL_INTERVAL_MS = 3000;
+            let pollTimer = null;
+
+            function setLiveState(state, text) {
+                if (!liveStatus) return;
+                liveStatus.dataset.state = state;
+                liveText.textContent = text;
+            }
+
+            // ---- Polling fallback (used whenever SignalR is not connected) ----
+            function startPollingFallback() {
+                if (pollTimer) return;
+                setLiveState("polling", "Live updates offline · checking every 3 s");
+                pollTimer = setInterval(pollProcessingRows, POLL_INTERVAL_MS);
+                pollProcessingRows();
+            }
+
+            function stopPollingFallback() {
+                if (!pollTimer) return;
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+
+            function pollProcessingRows() {
+                document.querySelectorAll('tr[data-document-id][data-status="Processing"]').forEach(row => {
+                    const docId = row.dataset.documentId;
+                    fetch(`/api/documents/${encodeURIComponent(docId)}/status`)
+                        .then(res => res.ok ? res.json() : null)
+                        .then(data => { if (data) updateDocumentRow(data); })
+                        .catch(() => { /* keep polling */ });
+                });
+            }
+
+            // ---- SignalR ----
+            if (typeof signalR === "undefined") {
+                startPollingFallback();
+                return;
+            }
+
             const connection = new signalR.HubConnectionBuilder()
                 .withUrl("/hubs/document")
                 .withAutomaticReconnect()
                 .build();
 
-            const indicator = document.getElementById("signalrIndicator");
-            const indicatorText = document.getElementById("signalrText");
+            connection.on("DocumentStatusChanged", updateDocumentRow);
+            connection.on("DocumentProgress", updateDocumentProgress);
 
-            connection.start().then(() => {
-                if (indicator) {
-                    indicator.classList.remove("text-secondary", "spinner-grow-sm");
-                    indicator.classList.add("text-success");
-                }
-                if (indicatorText) {
-                    indicatorText.textContent = "SignalR: Đã kết nối thời gian thực (Realtime Ingestion)";
-                    indicatorText.classList.remove("text-secondary");
-                    indicatorText.classList.add("text-success");
-                }
-            }).catch(err => {
-                console.warn("SignalR connection error:", err);
-                if (indicatorText) {
-                    indicatorText.textContent = "SignalR: Kết nối ngoại tuyến. Sử dụng tự động kiểm tra trạng thái.";
-                }
+            connection.onreconnecting(() => startPollingFallback());
+            connection.onreconnected(() => {
+                stopPollingFallback();
+                setLiveState("connected", "Live updates on");
+                pollProcessingRows(); // catch up on anything missed while offline
             });
+            connection.onclose(() => startPollingFallback());
 
-            // Listen for document status changes
-            connection.on("DocumentStatusChanged", function (data) {
-                console.log("DocumentStatusChanged event:", data);
-                updateDocumentRow(data);
-            });
+            connection.start()
+                .then(() => {
+                    setLiveState("connected", "Live updates on");
+                    // Events sent before the connection opened are lost, so sync once now.
+                    pollProcessingRows();
+                })
+                .catch(err => {
+                    console.warn("SignalR connection failed:", err);
+                    startPollingFallback();
+                });
 
-            // Listen for document progress
-            connection.on("DocumentProgress", function (data) {
-                console.log("DocumentProgress event:", data);
-                updateDocumentProgress(data);
-            });
+            // ---- Row rendering ----
+            function renderStatus(data) {
+                if (data.status === "Success") {
+                    return `<span class="chip chip-ok">Indexed</span>`;
+                }
+                if (data.status === "Failed") {
+                    const err = data.errorMessage ? `<span class="error-text">${escapeHtml(data.errorMessage)}</span>` : "";
+                    return `<span class="chip chip-err">Failed</span>${err}`;
+                }
+                if (data.status === "Processing") {
+                    return `
+                        <span class="chip chip-warn">Processing</span>
+                        <div class="meter" role="progressbar" aria-label="Processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="5">
+                            <div class="meter-fill"></div>
+                        </div>
+                        <span class="step-text">Queued</span>`;
+                }
+                return `<span class="chip chip-muted">${escapeHtml(data.status)}</span>`;
+            }
 
             function updateDocumentRow(data) {
                 const row = document.getElementById("doc-row-" + data.documentId);
-                if (!row) {
-                    // Document might have just been uploaded from another tab, reload to reflect
-                    location.reload();
+
+                if (data.status === "Deleted") {
+                    if (row) row.remove();
+                    refreshStats();
                     return;
                 }
 
-                if (data.status === "Deleted") {
-                    row.remove();
+                if (!row) {
+                    // Uploaded from another tab: reload to show the new row.
+                    location.reload();
                     return;
                 }
 
@@ -251,52 +279,35 @@
                 if (pageCountEl && data.pageCount > 0) pageCountEl.textContent = data.pageCount;
                 if (chunkCountEl && data.chunkCount > 0) chunkCountEl.textContent = data.chunkCount;
 
-                if (statusContainer) {
-                    if (data.status === "Success") {
-                        statusContainer.innerHTML = `
-                            <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 d-inline-flex align-items-center gap-1">
-                                <i class="bi bi-check-circle-fill"></i> Hoàn thành
-                            </span>
-                        `;
-                    } else if (data.status === "Failed") {
-                        const errMsg = data.errorMessage ? `<small class="d-block text-danger mt-1 text-truncate" style="max-width: 220px;" title="${data.errorMessage}"><i class="bi bi-info-circle me-1"></i>${data.errorMessage}</small>` : '';
-                        statusContainer.innerHTML = `
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2 d-inline-flex align-items-center gap-1">
-                                <i class="bi bi-x-circle-fill"></i> Thất bại
-                            </span>
-                            ${errMsg}
-                        `;
-                    } else if (data.status === "Processing") {
-                        statusContainer.innerHTML = `
-                            <div>
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle py-1 px-2 d-inline-flex align-items-center gap-1">
-                                    <span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý
-                                </span>
-                                <div class="progress mt-1" style="height: 6px; width: 140px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 50%"></div>
-                                </div>
-                                <small class="text-muted step-text" style="font-size: 0.7rem;">Đang phân tích...</small>
-                            </div>
-                        `;
-                    }
+                if (row.dataset.status !== data.status || data.status !== "Processing") {
+                    row.dataset.status = data.status;
+                    if (statusContainer) statusContainer.innerHTML = renderStatus(data);
                 }
+                refreshStats();
             }
 
             function updateDocumentProgress(data) {
                 const row = document.getElementById("doc-row-" + data.documentId);
-                if (!row) return;
+                if (!row || row.dataset.status !== "Processing") return;
 
-                const progressBar = row.querySelector(".progress-bar");
+                const meter = row.querySelector(".meter");
+                const fill = row.querySelector(".meter-fill");
                 const stepText = row.querySelector(".step-text");
 
-                if (progressBar) {
-                    progressBar.style.width = data.percent + "%";
-                }
-                if (stepText) {
-                    stepText.textContent = data.step + ` (${data.percent}%)`;
-                }
+                if (fill) fill.style.width = data.percent + "%";
+                if (meter) meter.setAttribute("aria-valuenow", data.percent);
+                if (stepText) stepText.textContent = `${data.step} · ${data.percent}%`;
+            }
+
+            function refreshStats() {
+                const rows = [...document.querySelectorAll("tr[data-document-id]")];
+                const count = s => rows.filter(r => r.dataset.status === s).length;
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+                set("statTotal", rows.length);
+                set("statReady", count("Success"));
+                set("statProcessing", count("Processing"));
+                set("statFailed", count("Failed"));
             }
         });
     </script>
 }
-

@@ -52,7 +52,7 @@ public class QdrantVectorStore : IVectorStore
                     new VectorParams { Size = (ulong)_dimensions, Distance = Distance.Cosine },
                     cancellationToken: ct);
 
-                _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Khởi tạo collection thành công, collection={Collection}, số chiều={Dimensions}",
+                _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Created collection, collection={Collection}, dimensions={Dimensions}",
                     _options.CollectionName, _dimensions);
             }
 
@@ -60,7 +60,7 @@ public class QdrantVectorStore : IVectorStore
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Lỗi khi kiểm tra/tạo collection={Collection}",
+            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Failed to check/create collection={Collection}",
                 _options.CollectionName);
             throw;
         }
@@ -100,12 +100,12 @@ public class QdrantVectorStore : IVectorStore
 
             await _client.UpsertAsync(_options.CollectionName, pointStructs, cancellationToken: ct);
 
-            _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Upsert thành công, collection={Collection}, documentId={DocId}, số điểm={Count}",
+            _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Upsert succeeded, collection={Collection}, documentId={DocId}, points={Count}",
                 _options.CollectionName, docId, points.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Upsert thất bại, collection={Collection}, documentId={DocId}, số điểm={Count}",
+            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Upsert failed, collection={Collection}, documentId={DocId}, points={Count}",
                 _options.CollectionName, docId, points.Count);
             throw;
         }
@@ -153,14 +153,14 @@ public class QdrantVectorStore : IVectorStore
                 Score = sp.Score
             }).ToList();
 
-            _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Tìm kiếm thành công, collection={Collection}, kết quả={Count}",
+            _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Search succeeded, collection={Collection}, results={Count}",
                 _options.CollectionName, hits.Count);
 
             return hits;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Tìm kiếm thất bại, collection={Collection}",
+            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Search failed, collection={Collection}",
                 _options.CollectionName);
             throw;
         }
@@ -189,12 +189,12 @@ public class QdrantVectorStore : IVectorStore
 
             await _client.DeleteAsync(_options.CollectionName, filter, cancellationToken: ct);
 
-            _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Xóa vector theo documentId thành công, collection={Collection}, documentId={DocId}",
+            _logger.LogInformation("QdrantVectorStore.cs - Qdrant: Deleted vectors by documentId, collection={Collection}, documentId={DocId}",
                 _options.CollectionName, documentId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Xóa vector theo documentId thất bại, collection={Collection}, documentId={DocId}",
+            _logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Failed to delete vectors by documentId, collection={Collection}, documentId={DocId}",
                 _options.CollectionName, documentId);
             throw;
         }

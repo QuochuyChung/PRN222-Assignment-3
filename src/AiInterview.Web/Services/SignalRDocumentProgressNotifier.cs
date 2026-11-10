@@ -39,12 +39,12 @@ public class SignalRDocumentProgressNotifier : IDocumentProgressNotifier
                 updatedAt = DateTime.UtcNow
             });
 
-            _logger.LogInformation("SignalRDocumentProgressNotifier.cs - SignalR: Đẩy thông báo trạng thái, documentId={DocId}, status={Status}",
+            _logger.LogInformation("SignalRDocumentProgressNotifier.cs - SignalR: Pushed status update, documentId={DocId}, status={Status}",
                 documentId, status);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SignalRDocumentProgressNotifier.cs - SignalR: Đẩy thông báo trạng thái thất bại, documentId={DocId}", documentId);
+            _logger.LogError(ex, "SignalRDocumentProgressNotifier.cs - SignalR: Failed to push status update, documentId={DocId}", documentId);
         }
     }
 
@@ -60,12 +60,12 @@ public class SignalRDocumentProgressNotifier : IDocumentProgressNotifier
                 updatedAt = DateTime.UtcNow
             });
 
-            _logger.LogInformation("SignalRDocumentProgressNotifier.cs - SignalR: Đẩy tiến độ xử lý, documentId={DocId}, step={Step}, percent={Percent}%",
+            _logger.LogInformation("SignalRDocumentProgressNotifier.cs - SignalR: Pushed progress update, documentId={DocId}, step={Step}, percent={Percent}%",
                 documentId, step, percent);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SignalRDocumentProgressNotifier.cs - SignalR: Đẩy tiến độ thất bại, documentId={DocId}", documentId);
+            _logger.LogError(ex, "SignalRDocumentProgressNotifier.cs - SignalR: Failed to push progress update, documentId={DocId}", documentId);
         }
     }
 }

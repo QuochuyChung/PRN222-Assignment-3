@@ -48,13 +48,13 @@ public class MinioFileStorage : IFileStorage
                     UseClientRegion = true
                 };
                 await _s3Client.PutBucketAsync(putBucketRequest, ct);
-                _logger.LogInformation("MinioFileStorage.cs - MinIO: Khởi tạo bucket mới, bucket={Bucket}", _options.BucketName);
+                _logger.LogInformation("MinioFileStorage.cs - MinIO: Created bucket, bucket={Bucket}", _options.BucketName);
             }
             _bucketInitialized = true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: Lỗi khi kiểm tra/tạo bucket={Bucket}", _options.BucketName);
+            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: Failed to check/create bucket={Bucket}", _options.BucketName);
             throw;
         }
         finally
@@ -79,12 +79,12 @@ public class MinioFileStorage : IFileStorage
             };
 
             await _s3Client.PutObjectAsync(putRequest, ct);
-            _logger.LogInformation("MinioFileStorage.cs - MinIO: Upload thành công, bucket={Bucket}, key={Key}, size={Size}B",
+            _logger.LogInformation("MinioFileStorage.cs - MinIO: Upload succeeded, bucket={Bucket}, key={Key}, size={Size}B",
                 _options.BucketName, key, size);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: Upload thất bại, bucket={Bucket}, key={Key}",
+            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: Upload failed, bucket={Bucket}, key={Key}",
                 _options.BucketName, key);
             throw;
         }
@@ -110,7 +110,7 @@ public class MinioFileStorage : IFileStorage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: Đọc file thất bại, bucket={Bucket}, key={Key}",
+            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: File read failed, bucket={Bucket}, key={Key}",
                 _options.BucketName, key);
             throw;
         }
@@ -129,12 +129,12 @@ public class MinioFileStorage : IFileStorage
             };
 
             await _s3Client.DeleteObjectAsync(deleteRequest, ct);
-            _logger.LogInformation("MinioFileStorage.cs - MinIO: Xóa file thành công, bucket={Bucket}, key={Key}",
+            _logger.LogInformation("MinioFileStorage.cs - MinIO: File deleted, bucket={Bucket}, key={Key}",
                 _options.BucketName, key);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: Xóa file thất bại, bucket={Bucket}, key={Key}",
+            _logger.LogError(ex, "MinioFileStorage.cs - MinIO: File delete failed, bucket={Bucket}, key={Key}",
                 _options.BucketName, key);
             throw;
         }

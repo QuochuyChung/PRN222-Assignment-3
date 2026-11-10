@@ -38,9 +38,9 @@ public class CompositeDocumentTextExtractor : IDocumentTextExtractor
                 return await _openXmlExtractor.ExtractAsync(content, fileName, ct);
 
             default:
-                _logger.LogError("CompositeDocumentTextExtractor.cs - App: Định dạng file không được hỗ trợ, fileName={FileName}, extension={Ext}",
+                _logger.LogError("CompositeDocumentTextExtractor.cs - App: Unsupported file type, fileName={FileName}, extension={Ext}",
                     fileName, ext);
-                throw new NotSupportedException($"Định dạng file '{ext}' không được hỗ trợ. Chỉ hỗ trợ .pdf, .docx, .pptx.");
+                throw new NotSupportedException($"File type '{ext}' is not supported. Supported types: .pdf, .docx, .pptx.");
         }
     }
 }

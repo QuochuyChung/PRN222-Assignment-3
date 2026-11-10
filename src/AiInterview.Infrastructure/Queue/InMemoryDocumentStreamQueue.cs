@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Channels;
@@ -12,6 +13,7 @@ namespace AiInterview.Infrastructure.Queue;
 public class InMemoryDocumentStreamQueue : IDocumentStreamPublisher, IDocumentStreamConsumer
 {
     private readonly Channel<DocStreamMessageEnvelope> _channel;
+    private readonly ConcurrentQueue<DeadLetterEntry> _deadLetters = new();
     private readonly ILogger<InMemoryDocumentStreamQueue> _logger;
     private int _idCounter;
 
@@ -26,6 +28,9 @@ public class InMemoryDocumentStreamQueue : IDocumentStreamPublisher, IDocumentSt
         _logger = logger;
     }
 
+    /// <summary>Messages that were moved to the dead-letter list. Useful for tests and diagnostics.</summary>
+    public IReadOnlyCollection<DeadLetterEntry> DeadLetters => _deadLetters.ToArray();
+
     public async Task PublishAsync(DocStreamMessage message, CancellationToken ct = default)
     {
         string messageId = Interlocked.Increment(ref _idCounter).ToString();
@@ -37,7 +42,7 @@ public class InMemoryDocumentStreamQueue : IDocumentStreamPublisher, IDocumentSt
         };
 
         await _channel.Writer.WriteAsync(envelope, ct);
-        _logger.LogInformation("InMemoryDocumentStreamQueue.cs - App: Ghi vào stream giả lập thành công, messageId={MsgId}, documentId={DocId}",
+        _logger.LogInformation("InMemoryDocumentStreamQueue.cs - App: Wrote message to in-memory stream, messageId={MsgId}, documentId={DocId}",
             messageId, message.DocumentId);
     }
 
@@ -50,24 +55,19 @@ public class InMemoryDocumentStreamQueue : IDocumentStreamPublisher, IDocumentSt
 
         try
         {
-            while (list.Count < count)
+            // Block until at least one message arrives (or the timeout hits),
+            // then return everything that is already available, up to `count`.
+            if (await _channel.Reader.WaitToReadAsync(cts.Token))
             {
-                if (await _channel.Reader.WaitToReadAsync(cts.Token))
+                while (list.Count < count && _channel.Reader.TryRead(out var envelope))
                 {
-                    if (_channel.Reader.TryRead(out var envelope))
-                    {
-                        list.Add(envelope);
-                    }
-                }
-                else
-                {
-                    break;
+                    list.Add(envelope);
                 }
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            // Timeout reached, return whatever was collected
+            // Wait timeout reached with no messages.
         }
 
         return list;
@@ -78,5 +78,14 @@ public class InMemoryDocumentStreamQueue : IDocumentStreamPublisher, IDocumentSt
         _logger.LogInformation("InMemoryDocumentStreamQueue.cs - App: ACK messageId={MsgId}", messageId);
         return Task.CompletedTask;
     }
+
+    public Task DeadLetterAsync(DocStreamMessageEnvelope envelope, string reason, CancellationToken ct = default)
+    {
+        _deadLetters.Enqueue(new DeadLetterEntry(envelope, reason, DateTime.UtcNow));
+        _logger.LogWarning("InMemoryDocumentStreamQueue.cs - App: Moved message to dead-letter list, messageId={MsgId}, documentId={DocId}, reason={Reason}",
+            envelope.MessageId, envelope.Message.DocumentId, reason);
+        return Task.CompletedTask;
+    }
 }
 
+public record DeadLetterEntry(DocStreamMessageEnvelope Envelope, string Reason, DateTime FailedAt);

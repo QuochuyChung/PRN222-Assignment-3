@@ -16,7 +16,7 @@ public class DocumentHub : Hub
     public async Task JoinDocumentGroup(string documentId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, $"doc_{documentId}");
-        _logger.LogInformation("DocumentHub.cs - SignalR: Client {ConnectionId} tham gia theo dõi tài liệu {DocumentId}",
+        _logger.LogInformation("DocumentHub.cs - SignalR: Client {ConnectionId} subscribed to document {DocumentId}",
             Context.ConnectionId, documentId);
     }
 

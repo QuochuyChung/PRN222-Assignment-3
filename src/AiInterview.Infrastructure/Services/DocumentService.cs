@@ -63,18 +63,18 @@ public class DocumentService : IDocumentService
         string ext = Path.GetExtension(fileName);
         if (string.IsNullOrEmpty(ext) || !AllowedExtensions.Contains(ext))
         {
-            throw new ArgumentException($"Định dạng file không hợp lệ '{ext}'. Chỉ chấp nhận .pptx, .pdf, .docx.");
+            throw new ArgumentException($"Invalid file type '{ext}'. Allowed types: .pptx, .pdf, .docx.");
         }
 
         if (size > MaxFileSize)
         {
-            throw new ArgumentException($"Dung lượng file vượt quá giới hạn cho phép (tối đa {MaxFileSize / (1024 * 1024)}MB).");
+            throw new ArgumentException($"File is too large (max {MaxFileSize / (1024 * 1024)} MB).");
         }
 
         string documentId = Guid.NewGuid().ToString("N");
         string storageKey = $"{documentId}/{fileName}";
 
-        // 1. Thứ tự: file → Mongo → stream
+        // Order matters: file -> Mongo -> stream
         await _fileStorage.SaveAsync(storageKey, content, contentType, ct);
 
         var metadata = new DocumentMetadata
@@ -102,7 +102,7 @@ public class DocumentService : IDocumentService
             await _notifier.NotifyStatusChangedAsync(documentId, DocumentStatus.Processing.ToString(), null, 0, 0);
         }
 
-        _logger.LogInformation("DocumentService.cs - App: Upload và enqueue tài liệu thành công, documentId={DocId}, fileName={FileName}",
+        _logger.LogInformation("DocumentService.cs - App: Document uploaded and enqueued, documentId={DocId}, fileName={FileName}",
             documentId, fileName);
 
         return metadata;
@@ -113,29 +113,29 @@ public class DocumentService : IDocumentService
         var doc = await _docRepo.GetByIdAsync(documentId, ct);
         if (doc == null)
         {
-            _logger.LogError("DocumentService.cs - App: Không tìm thấy tài liệu để xử lý, documentId={DocId}", documentId);
+            _logger.LogError("DocumentService.cs - App: Document to process was not found, documentId={DocId}", documentId);
             return;
         }
 
         try
         {
-            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Đang tải file từ kho lưu trữ", 15);
+            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Downloading file from storage", 15);
 
             using var stream = await _fileStorage.OpenReadAsync(storageKey, ct);
 
-            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Đang trích xuất văn bản", 35);
+            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Extracting text", 35);
             var extracted = await _extractor.ExtractAsync(stream, doc.FileName, ct);
             extracted.DocumentId = documentId;
 
-            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Đang chia đoạn văn bản (chunking)", 55);
+            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Chunking text", 55);
             var chunks = _chunker.Chunk(extracted);
 
             if (chunks.Count == 0)
             {
-                throw new InvalidOperationException("Không thể tạo các đoạn văn bản từ tài liệu này.");
+                throw new InvalidOperationException("No text chunks could be created from this document.");
             }
 
-            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Đang tạo vector embedding", 75);
+            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Creating embeddings", 75);
             var chunkTexts = chunks.Select(c => c.Text).ToList();
             var embeddings = await _embeddingService.EmbedAsync(chunkTexts, ct);
 
@@ -154,7 +154,7 @@ public class DocumentService : IDocumentService
                 });
             }
 
-            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Đang lưu vector vào Qdrant", 90);
+            if (_notifier != null) await _notifier.NotifyProgressAsync(documentId, "Saving vectors to Qdrant", 90);
             await _vectorStore.UpsertAsync(vectorPoints, ct);
 
             await _docRepo.UpdateStatusAsync(
@@ -167,16 +167,16 @@ public class DocumentService : IDocumentService
 
             if (_notifier != null)
             {
-                await _notifier.NotifyProgressAsync(documentId, "Hoàn tất xử lý tài liệu", 100);
+                await _notifier.NotifyProgressAsync(documentId, "Processing complete", 100);
                 await _notifier.NotifyStatusChangedAsync(documentId, DocumentStatus.Success.ToString(), null, chunks.Count, extracted.PageCount);
             }
 
-            _logger.LogInformation("DocumentService.cs - App: Xử lý tài liệu hoàn tất thành công, documentId={DocId}, số chunk={ChunkCount}, số trang={PageCount}",
+            _logger.LogInformation("DocumentService.cs - App: Document processed, documentId={DocId}, chunks={ChunkCount}, pages={PageCount}",
                 documentId, chunks.Count, extracted.PageCount);
         }
         catch (ScannedPdfException ex)
         {
-            _logger.LogWarning(ex, "DocumentService.cs - App: Thất bại do PDF scan/không có text, documentId={DocId}", documentId);
+            _logger.LogWarning(ex, "DocumentService.cs - App: Failed: scanned PDF with no text layer, documentId={DocId}", documentId);
             await _docRepo.UpdateStatusAsync(documentId, DocumentStatus.Failed, ex.Message, ct: ct);
             if (_notifier != null)
             {
@@ -185,12 +185,7 @@ public class DocumentService : IDocumentService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "DocumentService.cs - App: Lỗi khi xử lý tài liệu, documentId={DocId}", documentId);
-            await _docRepo.UpdateStatusAsync(documentId, DocumentStatus.Failed, ex.Message, ct: ct);
-            if (_notifier != null)
-            {
-                await _notifier.NotifyStatusChangedAsync(documentId, DocumentStatus.Failed.ToString(), ex.Message, 0, 0);
-            }
+            _logger.LogError(ex, "DocumentService.cs - App: Document processing failed (worker will retry), documentId={DocId}", documentId);
             throw;
         }
     }
@@ -206,7 +201,7 @@ public class DocumentService : IDocumentService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "DocumentService.cs - App: Không thể xóa file MinIO/Storage, documentId={DocId}", documentId);
+                _logger.LogWarning(ex, "DocumentService.cs - App: Could not delete file from storage, documentId={DocId}", documentId);
             }
         }
 
@@ -216,7 +211,7 @@ public class DocumentService : IDocumentService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "DocumentService.cs - App: Không thể xóa vector trong Qdrant, documentId={DocId}", documentId);
+            _logger.LogWarning(ex, "DocumentService.cs - App: Could not delete vectors from Qdrant, documentId={DocId}", documentId);
         }
 
         await _docRepo.DeleteAsync(documentId, ct);
@@ -226,7 +221,7 @@ public class DocumentService : IDocumentService
             await _notifier.NotifyStatusChangedAsync(documentId, "Deleted", null, 0, 0);
         }
 
-        _logger.LogInformation("DocumentService.cs - App: Xóa toàn bộ tài liệu (Storage + Vector + Repo) thành công, documentId={DocId}",
+        _logger.LogInformation("DocumentService.cs - App: Deleted document from storage, vector store and repository, documentId={DocId}",
             documentId);
     }
 
@@ -235,7 +230,7 @@ public class DocumentService : IDocumentService
         var doc = await _docRepo.GetByIdAsync(documentId, ct);
         if (doc == null)
         {
-            throw new KeyNotFoundException($"Không tìm thấy tài liệu với ID: {documentId}");
+            throw new KeyNotFoundException($"Document not found: {documentId}");
         }
 
         await _vectorStore.DeleteByDocumentAsync(documentId, ct);
@@ -252,7 +247,7 @@ public class DocumentService : IDocumentService
             await _notifier.NotifyStatusChangedAsync(documentId, DocumentStatus.Processing.ToString(), null, 0, 0);
         }
 
-        _logger.LogInformation("DocumentService.cs - App: Re-index tài liệu được kích hoạt, documentId={DocId}", documentId);
+        _logger.LogInformation("DocumentService.cs - App: Re-index requested, documentId={DocId}", documentId);
     }
 }
 

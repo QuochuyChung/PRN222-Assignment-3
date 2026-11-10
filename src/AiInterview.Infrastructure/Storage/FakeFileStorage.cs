@@ -24,7 +24,7 @@ public class FakeFileStorage : IFileStorage
         byte[] bytes = ms.ToArray();
         _storage[key] = bytes;
 
-        _logger.LogInformation("FakeFileStorage.cs - App: Lưu file giả lập thành công, key={Key}, size={Size}B, contentType={ContentType}",
+        _logger.LogInformation("FakeFileStorage.cs - App: Saved file to fake storage, key={Key}, size={Size}B, contentType={ContentType}",
             key, bytes.Length, contentType);
     }
 
@@ -41,7 +41,7 @@ public class FakeFileStorage : IFileStorage
     public Task DeleteAsync(string key, CancellationToken ct = default)
     {
         _storage.TryRemove(key, out _);
-        _logger.LogInformation("FakeFileStorage.cs - App: Xóa file giả lập thành công, key={Key}", key);
+        _logger.LogInformation("FakeFileStorage.cs - App: Deleted file from fake storage, key={Key}", key);
         return Task.CompletedTask;
     }
 }
