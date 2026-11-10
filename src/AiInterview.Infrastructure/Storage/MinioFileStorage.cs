@@ -102,7 +102,7 @@ public class MinioFileStorage : IFileStorage
                 Key = key
             };
 
-            var response = await _s3Client.GetObjectAsync(getRequest, ct);
+            using var response = await _s3Client.GetObjectAsync(getRequest, ct);
             var memoryStream = new MemoryStream();
             await response.ResponseStream.CopyToAsync(memoryStream, ct);
             memoryStream.Position = 0;

@@ -59,6 +59,7 @@ public class DocumentService : IDocumentService
         long size,
         CancellationToken ct = default)
     {
+        fileName = Path.GetFileName(fileName);
         string ext = Path.GetExtension(fileName);
         if (string.IsNullOrEmpty(ext) || !AllowedExtensions.Contains(ext))
         {
