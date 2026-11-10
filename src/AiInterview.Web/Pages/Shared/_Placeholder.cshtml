@@ -1,13 +1,11 @@
 @model AiInterview.Web.Pages.Shared.PlaceholderInfo
-<div class="card">
-    <div class="card-body p-4 text-center">
-        <i class="bi bi-cone-striped fs-1" style="color:var(--accent)"></i>
-        <div class="fw-bold fs-5 mt-2">Trang khung — chưa cài đặt</div>
-        <p class="text-secondary mb-3">@Model.Description</p>
-        <span class="badge rounded-pill text-bg-light border me-1">Người phụ trách: @Model.Owner</span>
-        <span class="badge rounded-pill text-bg-light border">Task: @Model.Tickets</span>
-        <div class="small text-secondary mt-3">
-            PageModel gọi Service (inject interface), Service gọi Repository. Xem <code>README.md</code> mục “Thêm một chức năng mới”.
-        </div>
+<div class="panel placeholder-panel">
+    <i class="bi bi-cone-striped" aria-hidden="true"></i>
+    <h2 class="panel-title">Not built yet</h2>
+    <p>@Model.Description</p>
+    <div class="chips">
+        <span class="chip">Owner: @Model.Owner</span>
+        <span class="chip">Tasks: @Model.Tickets</span>
     </div>
+    <p class="small-note">The PageModel calls a Service (injected interface), the Service calls a Repository. See <code>README.md</code> for the walkthrough.</p>
 </div>

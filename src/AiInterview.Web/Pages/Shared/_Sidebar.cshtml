@@ -1,34 +1,34 @@
 @{
     var active = ViewData["Active"] as string ?? "";
     string Cls(string key) => active == key ? "active" : "";
+    string? Current(string key) => active == key ? "page" : null;
 }
-<aside class="sidebar d-flex flex-column flex-shrink-0 p-3" data-bs-theme="dark" style="width:248px">
-    <a asp-page="/Index" class="d-flex align-items-center gap-2 text-white text-decoration-none px-2 py-2 mb-3 fs-5 fw-bold">
-        <i class="bi bi-mic-fill" style="color:var(--accent)"></i> AI Interview
-    </a>
-
-    <div class="overflow-auto flex-grow-1">
-        <div class="nav-label">Menu</div>
-        <nav class="nav flex-column gap-1">
-            <a class="nav-link @Cls("dashboard")" asp-page="/Index"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
-            <a class="nav-link @Cls("documents")" asp-page="/Documents/Index"><i class="bi bi-file-earmark-text"></i><span>Tài liệu</span></a>
-            <a class="nav-link @Cls("questions")" asp-page="/Questions/Index"><i class="bi bi-patch-question"></i><span>Ngân hàng câu hỏi</span></a>
-            <a class="nav-link @Cls("sessions")" asp-page="/Sessions/Index"><i class="bi bi-calendar-check"></i><span>Phiên thi</span></a>
-        </nav>
-
-        <div class="nav-label mt-3">Phỏng vấn</div>
-        <nav class="nav flex-column gap-1">
-            <a class="nav-link @Cls("room")" asp-page="/Interview/Room"><i class="bi bi-mic"></i><span>Phòng phỏng vấn</span></a>
-            <a class="nav-link @Cls("logs")" asp-page="/Logs/Index"><i class="bi bi-list-ul"></i><span>Nhật ký phiên thi</span></a>
-        </nav>
+<aside id="sidebar" class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" aria-label="Main navigation">
+    <div class="sidebar-head">
+        <a asp-page="/Index" class="brand">
+            <span class="brand-mark" aria-hidden="true"><i class="bi bi-mic-fill"></i></span>
+            <span class="brand-text">AI Interview<small>Oral exam assistant</small></span>
+        </a>
+        <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button>
     </div>
 
-    <div class="d-flex align-items-center gap-2 p-2 mt-3 rounded-4 border border-secondary border-opacity-25" style="background:rgba(255,255,255,.04)">
-        <span class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
-              style="width:2.2rem;height:2.2rem;background:var(--accent);color:var(--accent-ink)">G</span>
-        <div class="lh-sm overflow-hidden">
-            <div class="small fw-semibold text-white text-truncate">Giảng viên</div>
-            <div class="text-truncate" style="font-size:.7rem;color:var(--sb-fg)">Vai trò giả lập (chưa đăng nhập)</div>
+    <nav class="sidebar-nav">
+        <div class="nav-label">Prepare</div>
+        <a class="nav-item @Cls("dashboard")" aria-current="@Current("dashboard")" asp-page="/Index"><i class="bi bi-grid" aria-hidden="true"></i><span>Dashboard</span></a>
+        <a class="nav-item @Cls("documents")" aria-current="@Current("documents")" asp-page="/Documents/Index"><i class="bi bi-files" aria-hidden="true"></i><span>Documents</span></a>
+        <a class="nav-item @Cls("questions")" aria-current="@Current("questions")" asp-page="/Questions/Index"><i class="bi bi-patch-question" aria-hidden="true"></i><span>Question bank</span></a>
+        <a class="nav-item @Cls("sessions")" aria-current="@Current("sessions")" asp-page="/Sessions/Index"><i class="bi bi-calendar-check" aria-hidden="true"></i><span>Exam sessions</span></a>
+
+        <div class="nav-label">Interview</div>
+        <a class="nav-item @Cls("room")" aria-current="@Current("room")" asp-page="/Interview/Room"><i class="bi bi-mic" aria-hidden="true"></i><span>Interview room</span></a>
+        <a class="nav-item @Cls("logs")" aria-current="@Current("logs")" asp-page="/Logs/Index"><i class="bi bi-journal-text" aria-hidden="true"></i><span>Session logs</span></a>
+    </nav>
+
+    <div class="sidebar-user">
+        <span class="avatar" aria-hidden="true">L</span>
+        <div class="min-w-0">
+            <div class="user-name">Lecturer</div>
+            <div class="user-note">Simulated role, no sign-in yet</div>
         </div>
     </div>
 </aside>

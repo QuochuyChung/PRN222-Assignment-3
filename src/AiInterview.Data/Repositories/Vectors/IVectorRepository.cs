@@ -2,7 +2,7 @@ using AiInterview.Data.Models;
 
 namespace AiInterview.Data.Repositories.Vectors;
 
-/// <summary>Chunk + embedding. Real = Qdrant (Dev A, ING-06). Upsert phải idempotent (point id cố định).</summary>
+/// <summary>Chunk + embedding. Real = Qdrant (Dev A, ING-06). Upsert must be idempotent (fixed point id).</summary>
 public interface IVectorRepository
 {
     Task UpsertAsync(IReadOnlyList<VectorPoint> points, CancellationToken ct = default);

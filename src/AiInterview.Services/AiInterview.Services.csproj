@@ -7,14 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AiInterview.Common\AiInterview.Common.csproj" />
 
-    <!-- PrivateAssets="compile": Data CHỈ dùng nội bộ trong Services. Project nào tham chiếu Services (ví dụ Web)
-         sẽ KHÔNG nhìn thấy Data lúc biên dịch, nên PageModel không thể gọi repository dù cố ý. -->
+    <!-- PrivateAssets="compile": Data is used ONLY inside Services. Projects that reference Services (e.g. Web)
+         do NOT see Data at compile time, so a PageModel cannot call a repository even on purpose. -->
     <ProjectReference Include="..\AiInterview.Data\AiInterview.Data.csproj" PrivateAssets="compile" />
   </ItemGroup>
 

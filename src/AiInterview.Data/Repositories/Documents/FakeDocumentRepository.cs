@@ -5,7 +5,7 @@ using AiInterview.Data.Models;
 
 namespace AiInterview.Data.Repositories.Documents;
 
-/// <summary>Bản Fake trong bộ nhớ (singleton). Dữ liệu mất khi tắt app.</summary>
+/// <summary>In-memory fake (singleton). Data is lost when the app stops.</summary>
 public sealed class FakeDocumentRepository : IDocumentRepository
 {
     private readonly ConcurrentDictionary<string, DocumentRecord> _items = new();

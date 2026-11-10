@@ -2,7 +2,7 @@ using AiInterview.Common.Enums;
 
 namespace AiInterview.Services.Documents;
 
-/// <summary>Tài liệu trả cho giao diện. Không chứa chi tiết nội bộ như key lưu trữ.</summary>
+/// <summary>Document returned to the UI. Does not expose internal details such as the storage key.</summary>
 public sealed record DocumentDto(
     string Id,
     string FileName,
@@ -25,9 +25,9 @@ public sealed record ExtractedDocument(string FileName, IReadOnlyList<ExtractedP
 public sealed record ChunkDraft(int ChunkIndex, int Page, string Text);
 
 /// <summary>
-/// Quản lý tài liệu cho trang upload/danh sách. Dev A (ING-02, ING-08).
-/// Upload: lưu file (IFileRepository) -> ghi metadata Processing (IDocumentRepository) -> đẩy docs-stream. Đúng thứ tự này.
-/// Trả <see cref="DocumentDto"/>, không trả model của lớp Data.
+/// Document management for the upload/list page. Dev A (ING-02, ING-08).
+/// Upload order: save the file (IFileRepository) -> write Processing metadata (IDocumentRepository) -> push to docs-stream.
+/// Returns <see cref="DocumentDto"/>, never a Data model.
 /// </summary>
 public interface IDocumentService
 {
@@ -37,27 +37,73 @@ public interface IDocumentService
 
     Task<DocumentDto?> GetAsync(string id, CancellationToken ct = default);
 
-    /// <summary>Xóa ở cả metadata, vector và file gốc trong một hàm duy nhất.</summary>
+    /// <summary>Deletes metadata, vectors and the original file in one call.</summary>
     Task DeleteAsync(string id, CancellationToken ct = default);
 
-    /// <summary>Chạy lại pipeline (ví dụ khi đổi model embedding).</summary>
+    /// <summary>Runs the pipeline again (for example after changing the embedding model).</summary>
     Task ReindexAsync(string id, CancellationToken ct = default);
 }
 
-/// <summary>Trích văn bản từ PPTX/PDF/DOCX. Dev A (ING-03). PDF scan không có text phải báo lỗi rõ ràng.</summary>
+/// <summary>Extracts text from PPTX/PDF/DOCX. Dev A (ING-03). A scanned PDF without text must fail with a clear message.</summary>
 public interface IDocumentTextExtractor
 {
     Task<ExtractedDocument> ExtractAsync(Stream content, string fileName, CancellationToken ct = default);
 }
 
-/// <summary>Chia văn bản thành chunk, giữ số trang/slide. Dev A (ING-04).</summary>
+/// <summary>Splits text into chunks and keeps the page/slide number. Dev A (ING-04).</summary>
 public interface IChunker
 {
     IReadOnlyList<ChunkDraft> Chunk(ExtractedDocument document);
 }
 
-/// <summary>Pipeline xử lý một tài liệu: trích text, chunk, embedding, ghi vector, cập nhật trạng thái. Dev A (ING-07).</summary>
+/// <summary>Processing pipeline for one document: extract, chunk, embed, store vectors, update status. Dev A (ING-07).</summary>
 public interface IDocumentProcessingService
 {
     Task ProcessAsync(string documentId, CancellationToken ct = default);
+}
+
+/// <summary>Live progress of one document, pushed to the UI (SignalR in Web). <see cref="Percent"/> is 0-100.</summary>
+public sealed record DocumentProgress(
+    string DocumentId,
+    DocumentStatus Status,
+    int Percent,
+    string Step,
+    string? ErrorMessage = null,
+    int ChunkCount = 0,
+    int PageCount = 0);
+
+/// <summary>
+/// Pushes document progress to clients. Services registers a no-op version; Web replaces it with SignalR.
+/// A process that runs only the worker (ROLE=worker) keeps the no-op, and the page falls back to polling.
+/// </summary>
+public interface IDocumentProgressNotifier
+{
+    Task NotifyAsync(DocumentProgress progress, CancellationToken ct = default);
+
+    Task NotifyDeletedAsync(string documentId, CancellationToken ct = default);
+}
+
+/// <summary>Ingestion settings, section <c>Ingestion</c> in appsettings.</summary>
+public sealed class IngestionOptions
+{
+    public const string SectionName = "Ingestion";
+
+    public int MaxFileSizeMb { get; set; } = 50;
+
+    /// <summary>Target chunk length in characters.</summary>
+    public int ChunkSize { get; set; } = 1000;
+
+    /// <summary>Characters shared by two neighbouring chunks (clamped to half of <see cref="ChunkSize"/>).</summary>
+    public int ChunkOverlap { get; set; } = 150;
+
+    /// <summary>Attempts per docs-stream message before it goes to the dead-letter stream.</summary>
+    public int MaxAttempts { get; set; } = 3;
+
+    /// <summary>First retry delay; doubles on every retry.</summary>
+    public int RetryBaseDelayMs { get; set; } = 1000;
+
+    /// <summary>Wait between reads when the stream is empty.</summary>
+    public int PollIntervalMs { get; set; } = 1000;
+
+    public static readonly string[] AllowedExtensions = [".pdf", ".docx", ".pptx"];
 }

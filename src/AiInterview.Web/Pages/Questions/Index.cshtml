@@ -1,9 +1,13 @@
 @page
 @model AiInterview.Web.Pages.Questions.IndexModel
 @{
-    ViewData["Title"] = "Ngân hàng câu hỏi";
+    ViewData["Title"] = "Question bank";
     ViewData["Active"] = "questions";
 }
-<h2 class="fw-bold mb-1">Ngân hàng câu hỏi</h2>
-<div class="small text-secondary mb-3">Câu hỏi vấn đáp gắn mức Bloom, đáp án và ý chính.</div>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Question bank</h1>
+        <p class="page-lead">Interview questions with a Bloom level, reference answer and key points.</p>
+    </div>
+</div>
 <partial name="_Placeholder" model="Model.Info" />

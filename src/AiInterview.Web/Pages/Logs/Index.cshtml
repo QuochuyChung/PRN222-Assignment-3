@@ -1,9 +1,13 @@
 @page
 @model AiInterview.Web.Pages.Logs.IndexModel
 @{
-    ViewData["Title"] = "Nhật ký phiên thi";
+    ViewData["Title"] = "Session logs";
     ViewData["Active"] = "logs";
 }
-<h2 class="fw-bold mb-1">Nhật ký phiên thi</h2>
-<div class="small text-secondary mb-3">Lưu toàn bộ câu hỏi và câu trả lời để đối chiếu khi cần.</div>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Session logs</h1>
+        <p class="page-lead">Every question and answer is kept so results can be checked later.</p>
+    </div>
+</div>
 <partial name="_Placeholder" model="Model.Info" />

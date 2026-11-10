@@ -1,46 +1,47 @@
 @using AiInterview.Common.Configuration
 @inject InfraOptions Infra
 <!doctype html>
-<html lang="vi" data-bs-theme="light" data-palette="ocean">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@(ViewData["Title"] ?? "AI Interview") — AI Interview</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>@(ViewData["Title"] ?? "AI Interview") · AI Interview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true">
     <script>
-        // Áp bảng màu đã chọn trước khi render để không bị nháy màu.
+        // Apply the saved sidebar state before first paint to avoid a flash.
         try {
-            var p = localStorage.getItem('palette');
-            if (p) document.documentElement.dataset.palette = p;
             if (localStorage.getItem('sidebar') === 'collapsed') document.documentElement.classList.add('sidebar-collapsed');
         } catch (e) { }
     </script>
 </head>
 <body>
-<div class="d-flex vh-100">
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app">
     <partial name="_Sidebar" />
 
-    <div class="flex-grow-1 d-flex flex-column overflow-hidden">
-        <header class="d-flex align-items-center gap-3 px-4 py-3">
-            <button id="sidebarToggle" class="btn btn-light btn-sm border rounded-3 px-2" title="Thu gọn menu">
-                <i class="bi bi-layout-sidebar-inset"></i>
+    <div class="app-main">
+        <header class="topbar">
+            <button class="icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Open menu">
+                <i class="bi bi-list" aria-hidden="true"></i>
             </button>
+            <button id="sidebarToggle" class="icon-btn d-none d-lg-inline-flex" type="button" aria-label="Collapse menu" title="Collapse menu">
+                <i class="bi bi-layout-sidebar" aria-hidden="true"></i>
+            </button>
+            <span class="topbar-title">@(ViewData["Title"] ?? "AI Interview")</span>
 
-            <div class="ms-auto d-flex align-items-center gap-2">
-                <span class="badge rounded-pill text-bg-light border fw-medium" title="Infra:Mode / Role">
-                    <i class="bi bi-hdd-network"></i> @Infra.Mode · @Infra.Role
+            <div class="topbar-tools">
+                <span class="mode-chip" title="Infra:Mode · Role">
+                    <span class="dot" aria-hidden="true"></span>@Infra.Mode · @Infra.Role
                 </span>
-                <div class="btn-group btn-group-sm" role="group" aria-label="Bảng màu">
-                    <button type="button" class="btn btn-outline-secondary" data-palette-choice="ocean">Ocean</button>
-                    <button type="button" class="btn btn-outline-secondary" data-palette-choice="violet">Violet</button>
-                </div>
             </div>
         </header>
 
-        <main class="flex-grow-1 overflow-auto px-4 pb-5">
+        <main id="main" class="app-content">
             @RenderBody()
         </main>
     </div>
