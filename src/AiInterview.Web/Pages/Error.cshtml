@@ -1,0 +1,15 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Có lỗi xảy ra";
+}
+<div class="card mt-3">
+    <div class="card-body p-4">
+        <h2 class="fw-bold text-danger">Có lỗi xảy ra</h2>
+        <p class="text-secondary mb-1">Yêu cầu không xử lý được. Vui lòng thử lại.</p>
+        @if (!string.IsNullOrEmpty(Model.RequestId))
+        {
+            <div class="small">Mã yêu cầu: <code>@Model.RequestId</code></div>
+        }
+    </div>
+</div>

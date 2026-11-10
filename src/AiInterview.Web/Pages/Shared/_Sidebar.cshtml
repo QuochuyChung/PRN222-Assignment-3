@@ -1,0 +1,34 @@
+@{
+    var active = ViewData["Active"] as string ?? "";
+    string Cls(string key) => active == key ? "active" : "";
+}
+<aside class="sidebar d-flex flex-column flex-shrink-0 p-3" data-bs-theme="dark" style="width:248px">
+    <a asp-page="/Index" class="d-flex align-items-center gap-2 text-white text-decoration-none px-2 py-2 mb-3 fs-5 fw-bold">
+        <i class="bi bi-mic-fill" style="color:var(--accent)"></i> AI Interview
+    </a>
+
+    <div class="overflow-auto flex-grow-1">
+        <div class="nav-label">Menu</div>
+        <nav class="nav flex-column gap-1">
+            <a class="nav-link @Cls("dashboard")" asp-page="/Index"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
+            <a class="nav-link @Cls("documents")" asp-page="/Documents/Index"><i class="bi bi-file-earmark-text"></i><span>Tài liệu</span></a>
+            <a class="nav-link @Cls("questions")" asp-page="/Questions/Index"><i class="bi bi-patch-question"></i><span>Ngân hàng câu hỏi</span></a>
+            <a class="nav-link @Cls("sessions")" asp-page="/Sessions/Index"><i class="bi bi-calendar-check"></i><span>Phiên thi</span></a>
+        </nav>
+
+        <div class="nav-label mt-3">Phỏng vấn</div>
+        <nav class="nav flex-column gap-1">
+            <a class="nav-link @Cls("room")" asp-page="/Interview/Room"><i class="bi bi-mic"></i><span>Phòng phỏng vấn</span></a>
+            <a class="nav-link @Cls("logs")" asp-page="/Logs/Index"><i class="bi bi-list-ul"></i><span>Nhật ký phiên thi</span></a>
+        </nav>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 p-2 mt-3 rounded-4 border border-secondary border-opacity-25" style="background:rgba(255,255,255,.04)">
+        <span class="rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+              style="width:2.2rem;height:2.2rem;background:var(--accent);color:var(--accent-ink)">G</span>
+        <div class="lh-sm overflow-hidden">
+            <div class="small fw-semibold text-white text-truncate">Giảng viên</div>
+            <div class="text-truncate" style="font-size:.7rem;color:var(--sb-fg)">Vai trò giả lập (chưa đăng nhập)</div>
+        </div>
+    </div>
+</aside>

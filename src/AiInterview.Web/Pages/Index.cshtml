@@ -1,0 +1,97 @@
+@page
+@model IndexModel
+@using AiInterview.Common.Configuration
+@inject InfraOptions Infra
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Active"] = "dashboard";
+    var s = Model.Summary;
+}
+
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Dashboard</h2>
+        <div class="small text-secondary">Tổng quan hệ thống phỏng vấn vấn đáp bằng giọng nói.</div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-xl-4">
+        <div class="card hero h-100 position-relative overflow-hidden">
+            <div class="card-body p-4">
+                <span class="badge rounded-pill bg-white bg-opacity-10 fw-medium">
+                    <span style="color:var(--accent)">●</span> Chế độ @Infra.Mode
+                </span>
+                <div class="fs-4 fw-bold mt-3" style="max-width:15rem">AI giám khảo ảo cho vấn đáp</div>
+                <div class="small mt-2 opacity-75" style="max-width:16rem">
+                    Câu hỏi sinh từ tài liệu môn học, AI hỏi xoáy khi câu trả lời còn mơ hồ.
+                </div>
+                <a asp-page="/Interview/Room" class="d-inline-block mt-4 small fw-semibold text-white text-decoration-none">
+                    Vào phòng phỏng vấn <i class="bi bi-arrow-right"></i>
+                </a>
+                <i class="bi bi-mic-fill hero-mark"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-xl-2">
+        <div class="card h-100"><div class="card-body">
+            <div class="small text-secondary">Tài liệu đã xử lý</div>
+            <div class="fs-2 fw-bold mt-2">@s.ProcessedDocuments<span class="fs-6 text-secondary">/@s.TotalDocuments</span></div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="small text-secondary">Câu hỏi đã duyệt</div>
+            <div class="fs-2 fw-bold mt-2">@s.ApprovedQuestions</div>
+            <div class="small text-secondary">@s.DraftQuestions bản nháp chờ duyệt</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="small text-secondary">Phiên thi hoàn thành</div>
+            <div class="fs-2 fw-bold mt-2">@s.CompletedSessions<span class="fs-6 text-secondary">/@s.TotalSessions</span></div>
+            <div class="small text-secondary">@s.TotalTurns lượt hỏi/đáp</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="d-flex align-items-center justify-content-between p-4 pb-2">
+            <div class="fw-bold">Lượt hỏi/đáp gần đây</div>
+            <a class="btn btn-sm btn-accent" asp-page="/Logs/Index">Xem nhật ký</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr><th class="ps-4">Loại</th><th>Câu hỏi</th><th>Trả lời</th><th class="pe-4">Kết thúc</th></tr>
+                </thead>
+                <tbody>
+                @if (s.RecentTurns.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-secondary py-4">Chưa có lượt nào.</td></tr>
+                }
+                @foreach (var t in s.RecentTurns)
+                {
+                    <tr>
+                        <td class="ps-4">
+                            @if (t.IsFollowUp)
+                            {
+                                <span class="badge rounded-pill text-bg-warning">Hỏi xoáy</span>
+                            }
+                            else
+                            {
+                                <span class="badge rounded-pill text-bg-light border">Câu chính</span>
+                            }
+                        </td>
+                        <td class="text-truncate" style="max-width:20rem">@t.QuestionText</td>
+                        <td class="text-secondary small text-truncate" style="max-width:22rem">@t.TranscriptPreview</td>
+                        <td class="text-secondary small text-nowrap pe-4">@t.EndedAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

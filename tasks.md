@@ -43,31 +43,51 @@ Một source, một image, một chart. Chart có hai Deployment dùng chung ima
 
 Luật cứng (hết giờ, hết số lượt xoáy) do **server quyết định**, LLM chỉ quyết định đủ ý hay chưa.
 
+### 1.4 Kiến trúc 3 lớp
+
+```
+Pages/*.cshtml.cs (PageModel)  →  Service  →  Repository  →  SQL / Mongo / Qdrant / Redis / MinIO / Gemini
+   AiInterview.Web              AiInterview.Services       AiInterview.Data
+```
+
+| Project | Vai trò | Quy tắc |
+|---|---|---|
+| `AiInterview.Web` | Razor Pages + code-behind (PageModel), SignalR hub, `Program.cs` | PageModel chỉ nhận request, gọi **Service**, trả view. **Không** gọi repository, không chứa logic nghiệp vụ |
+| `AiInterview.Services` | Logic nghiệp vụ: prompt, state machine, luật cứng, chunking, điều phối pipeline | Chỉ phụ thuộc **interface repository**. Giống nhau ở cả Fake và Real |
+| `AiInterview.Data` | Entity, `DbContext`, Repository (interface + bản Fake + bản Real) | Mọi lời gọi ra ngoài (SQL, Mongo, Qdrant, Redis, MinIO, **cả Gemini**) nằm ở đây |
+| `AiInterview.Common` | Options, hằng số (tên stream, key Redis), helper log | Không chứa logic nghiệp vụ |
+
+Phụ thuộc một chiều: `Web → Services → Data → Common`. Ví dụ: `Pages/Index.cshtml.cs` → `IDashboardService` → `IQuestionRepository` / `ISessionRepository`...
+
 ---
 
 ## 2. Quy ước làm việc
 
 ### 2.1 Fake / Real
 
-Mỗi interface có hai bản cài đặt, chọn bằng cấu hình:
+Fake/Real nằm ở **lớp Repository** (Service không biết đang chạy chế độ nào). Mỗi repository có hai bản cài đặt, chọn bằng cấu hình và đăng ký trong file `Registration/*RepositoryRegistration.cs` của module:
 
 ```
 Infra:Mode = Fake   → máy dev: in-memory / dữ liệu giả, KHÔNG cần Redis/Mongo/Qdrant/MinIO/Gemini thật
 Infra:Mode = Real   → K8s: kết nối hạ tầng thật
 ```
 
-- Chủ module viết **cả Fake và Real** cho interface của module mình.
-- M cung cấp interface và các client dùng chung (Mongo, Redis, Qdrant, S3, `DbContext`, đọc cấu hình từ biến môi trường) đã đăng ký sẵn trong DI.
+- Chủ module viết **cả Fake và Real** cho repository của module mình (Service viết một lần, dùng chung).
+- M cung cấp interface và các client dùng chung (`IMongoDatabase`, `IConnectionMultiplexer`, `QdrantClient`, `IAmazonS3`, `HttpClient` tên `gemini`, `DbContext`, options đọc từ biến môi trường) đã đăng ký sẵn trong DI.
 - Bản Real **chỉ chạy được trên cluster** của M. Nó phải biên dịch được và qua review mới merge. Lỗi chỉ lộ khi M chạy thật, M ghi vào mục "Vướng mắc" trong `progress.md`, gắn đúng người chủ module để sửa.
 - **Không cần Docker/docker-compose** trên máy dev.
 
 ### 2.2 Seed data và test (bắt buộc)
 
-Mỗi người viết seed/test cho module mình (liệt kê trong từng task). Mục tiêu: chạy ở chế độ Fake được ngay, không phụ thuộc người khác. Seed đặt trong `/seed` hoặc `Data/Seed` của module.
+Mỗi người viết seed/test cho module mình (liệt kê trong từng task). Mục tiêu: chạy ở chế độ Fake được ngay, không phụ thuộc người khác.
+
+- **Seed SQL** (câu hỏi, phiên thi...): viết class `IDataSeeder` (mẫu: `SampleDataSeeder` trong `AiInterview.Data/Seeding`), đăng ký trong `Registration/*RepositoryRegistration.cs` của module, chỉ khi `infra.IsFake`.
+- **Dữ liệu mẫu khác** (file PPTX/PDF/DOCX, transcript mẫu...): đặt trong thư mục `seed/<module>/` ở gốc repo.
+- **Test**: đặt trong `tests/AiInterview.Tests/<Module>/`, chạy bằng `dotnet test`.
 
 ### 2.3 Quy ước log
 
-Mọi log ở bản Real (và nơi gọi ra ngoài) theo cú pháp:
+Mọi log ở bản Real (và nơi gọi ra ngoài) theo cú pháp (đã có helper `Info` / `Warn` / `Error` trong `AiInterview.Common.Logging`):
 
 ```
 <Tên file> - <Service>: <Mô tả chi tiết>
@@ -78,9 +98,10 @@ Mọi log ở bản Real (và nơi gọi ra ngoài) theo cú pháp:
 Ví dụ:
 
 ```csharp
-_logger.LogInformation("MinioFileStorage.cs - MinIO: Upload thành công, bucket={Bucket}, key={Key}, size={Size}B", bucket, key, size);
-_logger.LogError(ex, "QdrantVectorStore.cs - Qdrant: Upsert thất bại, collection={Collection}, documentId={DocId}, số điểm={Count}", col, docId, n);
-_logger.LogWarning("GeminiEmbeddingService.cs - Gemini: Bị giới hạn tốc độ, thử lại lần {Attempt}/{Max} sau {DelayMs}ms", a, max, d);
+_logger.Info("MinioFileRepository.cs", ServiceNames.MinIO, "Upload thành công, bucket={Bucket}, key={Key}, size={Size}B", bucket, key, size);
+_logger.Error(ex, "QdrantVectorRepository.cs", ServiceNames.Qdrant, "Upsert thất bại, collection={Collection}, documentId={DocId}, số điểm={Count}", col, docId, n);
+_logger.Warn("GeminiEmbeddingRepository.cs", ServiceNames.Gemini, "Bị giới hạn tốc độ, thử lại lần {Attempt}/{Max} sau {DelayMs}ms", a, max, d);
+// Kết quả: "MinioFileRepository.cs - MinIO: Upload thành công, bucket=..., key=..., size=...B"
 ```
 
 Quy tắc:
@@ -143,7 +164,7 @@ Một task chỉ được coi là **Done** khi đạt **Verified on cluster** (M
 | BASE-04 | DI chọn Fake/Real theo `Infra:Mode`; chọn phần chạy theo `ROLE` (`web` / `worker` / `all`) | BASE-03 |
 | BASE-05 | Layout shell theo template (sidebar, topbar, biến palette `[data-palette]`), trang rỗng cho từng module | BASE-01 |
 | BASE-06 | Cấu hình logging + helper theo quy ước 2.3, đọc cấu hình từ biến môi trường | BASE-01 |
-| BASE-07 | Dockerfile, cấu hình SonarQube, `progress.md` mẫu, `.gitignore`, hướng dẫn chạy Fake | BASE-01 |
+| BASE-07 | `progress.md` mẫu, `.gitignore`, `README.md`, `CLAUDE.md` (quy tắc cho agent), hướng dẫn chạy Fake. *(Dockerfile + cấu hình SonarQube thuộc hạ tầng, làm sau)* | BASE-01 |
 
 > **Giai đoạn 0:** BASE-01 đến BASE-04 phải xong trước để Dev A–D bắt đầu.
 
@@ -166,12 +187,12 @@ Một task chỉ được coi là **Done** khi đạt **Verified on cluster** (M
 
 | ID | Việc | Phụ thuộc |
 |---|---|---|
-| ING-01 | `IFileStorage`: `FakeFileStorage` (bộ nhớ/đĩa) + `MinioFileStorage` (AWSSDK.S3, `ForcePathStyle = true`) | BASE-03 |
+| ING-01 | `IFileRepository`: `FakeFileRepository` (bộ nhớ/đĩa) + `MinioFileRepository` (AWSSDK.S3, `ForcePathStyle = true`) | BASE-03 |
 | ING-02 | Trang upload: kiểm tra loại file (pptx/pdf/docx) và dung lượng, lưu file, ghi Mongo `Processing`, `XADD docs-stream` (**thứ tự: file → Mongo → stream**) | ING-01 |
 | ING-03 | `IDocumentTextExtractor`: DOCX/PPTX bằng `DocumentFormat.OpenXml`, PDF bằng `PdfPig`. PDF scan không có text → báo lỗi rõ, đánh dấu `Failed` kèm lý do | BASE-03 |
 | ING-04 | `IChunker`: chia đoạn theo slide/trang/heading, kích thước + độ chồng lấn cấu hình được, giữ metadata (số trang/slide, chỉ số chunk) | ING-03 |
-| ING-05 | `IEmbeddingService`: `FakeEmbedding` (vector giả ổn định theo nội dung) + `GeminiEmbeddingService`. **Gộp batch, giới hạn tốc độ, retry có backoff** | BASE-03 |
-| ING-06 | `IVectorStore`: `InMemoryVectorStore` + `QdrantVectorStore`. **Upsert idempotent**: point ID = `{documentId}:{chunkIndex}` | BASE-03 |
+| ING-05 | `IEmbeddingRepository`: `FakeEmbeddingRepository` (vector giả ổn định theo nội dung) + `GeminiEmbeddingRepository`. **Gộp batch, giới hạn tốc độ, retry có backoff** | BASE-03 |
+| ING-06 | `IVectorRepository`: `InMemoryVectorRepository` + `QdrantVectorRepository`. **Upsert idempotent**: point ID = `{documentId}:{chunkIndex}` | BASE-03 |
 | ING-07 | `DocumentWorker` (ROLE=worker): đọc `docs-stream` theo consumer group, xử lý, cập nhật Mongo, retry, dead-letter; tên consumer theo tên pod | ING-01…06 |
 | ING-08 | Trang danh sách tài liệu: trạng thái, SignalR đẩy tiến độ (kèm API lấy trạng thái hiện tại khi F5), xóa (Mongo + Qdrant + MinIO trong một hàm `DeleteDocumentAsync`), re-index | ING-02, ING-07 |
 | ING-09 | **Seed/test:** file mẫu PPTX/PDF/DOCX nhỏ có tiếng Việt, một PDF scan để thử lỗi; unit test extractor + chunker | — |
@@ -180,8 +201,8 @@ Một task chỉ được coi là **Done** khi đạt **Verified on cluster** (M
 
 | ID | Việc | Phụ thuộc |
 |---|---|---|
-| QST-01 | `IRetrievalService`: `FakeRetrieval` (chunk mẫu) + bản Real (embed câu truy vấn, search Qdrant, lọc theo `documentId`/môn) | BASE-03 |
-| QST-02 | `IQuestionGenerator`: prompt + parse JSON (Phụ lục C), `FakeQuestionGenerator` + `GeminiQuestionGenerator`. Mỗi câu có đáp án, ý chính, mức Bloom, `sourceChunkIds` | BASE-03 |
+| QST-01 | `IRetrievalService` (Service): embed câu truy vấn qua `IEmbeddingRepository`, tìm bằng `IVectorRepository`, lọc theo `documentId`/môn. Chạy Fake nhờ hai repository Fake | BASE-03 |
+| QST-02 | `IQuestionGeneratorService` (Service): dựng prompt, gọi `ILlmRepository`, parse JSON (Phụ lục C). Repository: `FakeLlmRepository` (trả JSON mẫu) + `GeminiLlmRepository` (dùng chung với ENG-04). Mỗi câu có đáp án, ý chính, mức Bloom, `sourceChunkIds` | BASE-03 |
 | QST-03 | Repository câu hỏi (SQL): CRUD, trạng thái `Draft`/`Approved`/`Rejected` | BASE-02 |
 | QST-04 | Trang sinh câu hỏi: chọn tài liệu `Success` → chọn số lượng/mức Bloom → sinh → danh sách `Draft` | QST-02, QST-03 |
 | QST-05 | Trang duyệt: sửa nội dung/đáp án/ý chính, duyệt hoặc loại bỏ; chỉ câu `Approved` vào ngân hàng chính thức | QST-04 |
@@ -193,10 +214,10 @@ Một task chỉ được coi là **Done** khi đạt **Verified on cluster** (M
 
 | ID | Việc | Phụ thuộc |
 |---|---|---|
-| ENG-01 | `ISessionStateStore`: `InMemorySessionStateStore` + `RedisSessionStateStore` (Hash `interview:{sessionId}`, TTL 2 giờ gia hạn theo hoạt động; lưu `deadline` tuyệt đối) | BASE-03 |
+| ENG-01 | `ISessionStateRepository`: `InMemorySessionStateRepository` + `RedisSessionStateRepository` (Hash `interview:{sessionId}`, TTL 2 giờ gia hạn theo hoạt động; lưu `deadline` tuyệt đối) | BASE-03 |
 | ENG-02 | Dịch vụ phiên thi: tạo phiên (chọn tập câu hỏi `Approved`, **tránh trùng giữa các thí sinh thi liền nhau**), cấu hình số câu chính, số lượt xoáy tối đa, thời gian mỗi câu | BASE-02, ENG-01 |
 | ENG-03 | State machine: `AskQuestion → Listening → Evaluating → FollowUp \| NextQuestion \| Finish`, có kiểm thử cho mọi chuyển trạng thái | ENG-01 |
-| ENG-04 | `IFollowUpDecider`: prompt + JSON (Phụ lục C), `FakeFollowUpDecider` (theo kịch bản mẫu) + `GeminiFollowUpDecider`; kèm đoạn tài liệu từ `IRetrievalService` | BASE-03 |
+| ENG-04 | `IFollowUpDecider` (Service): prompt + JSON (Phụ lục C), gọi `ILlmRepository` (Fake trả kịch bản mẫu theo ba kiểu trả lời; Real dùng chung `GeminiLlmRepository` với QST-02); kèm đoạn tài liệu từ `IRetrievalService` | BASE-03 |
 | ENG-05 | **Luật cứng phía server**: hết giờ, hết lượt xoáy → chuyển câu; kiểm tra lại thời gian dù client gửi gì; im lặng → nhắc một lần rồi bỏ qua | ENG-03 |
 | ENG-06 | Chống trùng: khóa `SET NX` theo `turnId`; request trùng không gọi LLM lần hai | ENG-01 |
 | ENG-07 | Endpoint (page handler/API): `start`, `state` (trả `remainingSeconds`), `submit-answer`, `skip`, `finish` | ENG-03…06 |
@@ -258,48 +279,41 @@ Giai đoạn 3             Triển khai K8s đầy đủ, sửa lỗi, kịch b�
 
 ---
 
-## Phụ lục A — Interface đề xuất (M chốt ở BASE-03)
+## Phụ lục A — Interface (đã chốt trong code ở BASE-03)
 
-```csharp
-public interface IFileStorage {
-    Task SaveAsync(string key, Stream content, string contentType, CancellationToken ct);
-    Task<Stream> OpenReadAsync(string key, CancellationToken ct);
-    Task DeleteAsync(string key, CancellationToken ct);
-}
-public interface IDocumentTextExtractor {
-    Task<ExtractedDocument> ExtractAsync(Stream content, string fileName, CancellationToken ct);
-}
-public interface IChunker {
-    IReadOnlyList<ChunkDraft> Chunk(ExtractedDocument doc);
-}
-public interface IEmbeddingService {
-    Task<IReadOnlyList<float[]>> EmbedAsync(IReadOnlyList<string> texts, CancellationToken ct);
-}
-public interface IVectorStore {
-    Task UpsertAsync(IReadOnlyList<VectorPoint> points, CancellationToken ct);
-    Task<IReadOnlyList<VectorHit>> SearchAsync(float[] vector, int topK, VectorFilter? filter, CancellationToken ct);
-    Task DeleteByDocumentAsync(string documentId, CancellationToken ct);
-}
-public interface IDocumentRepository { /* MongoDB: Create, Get, List, UpdateStatus, Delete */ }
-public interface IRetrievalService {
-    Task<IReadOnlyList<RetrievedChunk>> SearchAsync(string query, RetrievalScope scope, int topK, CancellationToken ct);
-}
-public interface IQuestionGenerator {
-    Task<IReadOnlyList<QuestionDraft>> GenerateAsync(GenerateRequest request, CancellationToken ct);
-}
-public interface IFollowUpDecider {
-    Task<FollowUpDecision> DecideAsync(FollowUpRequest request, CancellationToken ct);
-}
-public interface ISessionStateStore {
-    Task<SessionState?> GetAsync(string sessionId, CancellationToken ct);
-    Task SaveAsync(string sessionId, SessionState state, CancellationToken ct);
-    Task<bool> TryLockAsync(string sessionId, string turnId, TimeSpan ttl, CancellationToken ct);
-    Task DeleteAsync(string sessionId, CancellationToken ct);
-}
-public interface ITurnPublisher {
-    Task PublishAsync(TurnMessage turn, CancellationToken ct);
-}
-```
+Nguồn gốc là code trong repo; phần này chỉ tóm tắt. Muốn đổi interface phải báo M.
+
+**Repository** — `AiInterview.Data/Repositories/*` (mọi lời gọi hạ tầng ngoài nằm ở đây, kể cả Gemini)
+
+| Interface | Real | Fake | Người làm |
+|---|---|---|---|
+| `IDocumentRepository` (Create/Get/List/Count/UpdateStatus/Delete) | MongoDB | `FakeDocumentRepository` (**đã có**) | Dev A |
+| `IFileRepository` (Save/OpenRead/Delete) | MinIO | Bộ nhớ/đĩa | Dev A |
+| `IVectorRepository` (Upsert/Search/DeleteByDocument) | Qdrant | In-memory | Dev A |
+| `IEmbeddingRepository` (EmbedAsync) | Gemini | Vector giả ổn định | Dev A |
+| `ILlmRepository` (GenerateJsonAsync → chuỗi JSON thô) | Gemini | Trả JSON mẫu | Dev B + Dev C (dùng chung) |
+| `IQuestionRepository` | SQL (**đã có**) | SQLite in-memory | Dev B mở rộng |
+| `ISessionRepository` | SQL (**đã có**) | SQLite in-memory | Dev C mở rộng |
+| `ITurnRepository` (InsertIfNotExists/ListBySession/ListRecent/Count) | SQL (**đã có**) | SQLite in-memory | Dev B mở rộng |
+| `ISessionStateRepository` (Get/Save/TryLock/Delete) | Redis Hash | In-memory | Dev C |
+| `IMessageQueueRepository` (EnsureGroup/Publish/Read/Ack/DeadLetter) | Redis Streams | In-memory | Dev A + Dev B (dùng chung) |
+
+**Service** — `AiInterview.Services/*` (logic nghiệp vụ, giống nhau ở Fake và Real)
+
+| Interface | Việc | Người làm |
+|---|---|---|
+| `IDashboardService` | Tổng hợp số liệu Dashboard (**đã có**, làm mẫu luồng 3 lớp) | M → Dev D |
+| `IDocumentService` | Upload, danh sách, xóa, re-index | Dev A |
+| `IDocumentTextExtractor`, `IChunker` | Trích text PPTX/PDF/DOCX, chia chunk | Dev A |
+| `IDocumentProcessingService` | Pipeline: extract → chunk → embed → upsert → cập nhật trạng thái | Dev A |
+| `IRetrievalService` | Embed câu truy vấn, tìm chunk liên quan | Dev B |
+| `IQuestionGeneratorService`, `IQuestionService` | Sinh câu hỏi bằng LLM; lưu nháp, duyệt/sửa/loại bỏ | Dev B |
+| `ITurnLogService` | Ghi (idempotent theo TurnId) và xem log lượt thi | Dev B |
+| `IInterviewSessionService` | Vòng đời phiên thi, state machine, luật cứng | Dev C |
+| `IFollowUpDecider` | Quyết định hỏi xoáy (prompt + gọi `ILlmRepository`) | Dev C |
+| `ITurnPublisher` + `TurnMessage` | Đẩy lượt vào `turns-stream`; `TurnMessage` có sẵn `ToFields()` / `FromFields()` / `ToEntity()` để publisher và consumer không lệch định dạng | Dev C (publisher), Dev B (consumer) |
+
+**Luồng gọi:** `PageModel` (`*.cshtml.cs`) → `Service` → `Repository`. PageModel không gọi repository trực tiếp.
 
 ## Phụ lục B — Định dạng dữ liệu
 
