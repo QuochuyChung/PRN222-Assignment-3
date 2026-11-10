@@ -1,5 +1,6 @@
 using AiInterview.Common.Configuration;
 using AiInterview.Data.Repositories.Questions;
+using AiInterview.Data.Repositories.Ai;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AiInterview.Data.Registration;
@@ -11,6 +12,8 @@ internal static class QuestionRepositoryRegistration
     {
         // SQL dùng chung cho cả Fake (SQLite in-memory) và Real (SQL Server).
         services.AddScoped<IQuestionRepository, QuestionRepository>();
+        if (infra.IsFake) services.AddSingleton<ILlmRepository, FakeLlmRepository>();
+        else services.AddSingleton<ILlmRepository, GeminiLlmRepository>();
 
         // TODO QST-06: services.AddScoped<IDataSeeder, QuestionDataSeeder>(); (chỉ khi infra.IsFake)
         return services;

@@ -41,9 +41,7 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
     }
 
     [Theory]
-    [InlineData("/Questions")]
     [InlineData("/Sessions")]
-    [InlineData("/Logs")]
     public async Task Placeholder_Pages_Render(string url)
     {
         var response = await _client.GetAsync(url);
@@ -51,5 +49,26 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("Not built yet", html);
+    }
+
+    [Fact]
+    public async Task Questions_Page_Renders_Real_Content()
+    {
+        var response = await _client.GetAsync("/Questions");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Question bank", html);
+        Assert.DoesNotContain("Not built yet", html);
+    }
+
+    [Fact]
+    public async Task Logs_Page_Renders_Real_Content()
+    {
+        var response = await _client.GetAsync("/Logs");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain("Not built yet", html);
     }
 }

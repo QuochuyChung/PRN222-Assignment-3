@@ -9,10 +9,9 @@ internal static class EngineServiceRegistration
 {
     public static IServiceCollection AddEngineServices(this IServiceCollection services, InfraOptions infra)
     {
-        // ENG-04 (IFollowUpDecider) chưa đăng ký: ILlmRepository thuộc QST-02 và chưa có trong
-        // SharedRepositoryRegistration. InterviewSessionService nhận IFollowUpDecider là tham số
-        // *tuỳ chọn* nên vẫn resolve được; khi QST-02 xong chỉ cần bỏ comment dòng dưới.
-        // TODO ENG-04: services.AddScoped<IFollowUpDecider, FollowUpDecider>();
+        // ENG-04: ILlmRepository do QST-02 (Dev B) đăng ký trong QuestionRepositoryRegistration
+        // nên ở đây chỉ cần nối IFollowUpDecider -> FollowUpDecider.
+        services.AddScoped<IFollowUpDecider, FollowUpDecider>();
 
         services.AddScoped<IInterviewSessionService, InterviewSessionService>();
         services.AddScoped<ITurnPublisher, TurnPublisher>();

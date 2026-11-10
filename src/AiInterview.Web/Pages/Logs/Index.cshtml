@@ -10,4 +10,11 @@
         <p class="page-lead">Every question and answer is kept so results can be checked later.</p>
     </div>
 </div>
-<partial name="_Placeholder" model="Model.Info" />
+<form method="get" class="card p-3 mb-4"><label class="form-label" for="sessionId">Session ID</label><div class="d-flex gap-2"><input class="form-control" type="text" id="sessionId" name="sessionId" value="@Model.SessionId" placeholder="Enter session GUID" /><button class="btn btn-primary" type="submit">View session</button><a class="btn btn-outline-secondary" asp-page="/Logs/Index">Recent</a></div></form>
+@if (Model.Turns.Count == 0) { <p>No turns found.</p> }
+@foreach (var turn in Model.Turns) {
+    <article class="card p-4 mb-3"><div class="d-flex justify-content-between"><strong>@(turn.IsFollowUp ? "Follow-up" : "Question") · @turn.QuestionText</strong><span>@turn.StartedAt.ToLocalTime().ToString("g") – @turn.EndedAt.ToLocalTime().ToString("g")</span></div>
+        <p class="mt-3"><strong>Transcript:</strong> @turn.Transcript</p><p><strong>Decision:</strong> @(turn.NeedFollowUp ? "Follow-up needed" : "Continue") · @turn.Reason</p>
+        <p><strong>Sources:</strong> @string.Join(", ", turn.Sources)</p><small>Session: <a asp-page="/Logs/Index" asp-route-sessionId="@turn.SessionId">@turn.SessionId</a> · Turn: @turn.TurnId</small>
+    </article>
+}

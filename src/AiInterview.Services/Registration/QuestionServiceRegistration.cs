@@ -1,5 +1,7 @@
 using AiInterview.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using AiInterview.Services.Questions;
+using AiInterview.Services.Retrieval;
 
 namespace AiInterview.Services.Registration;
 
@@ -8,9 +10,10 @@ internal static class QuestionServiceRegistration
 {
     public static IServiceCollection AddQuestionServices(this IServiceCollection services, InfraOptions infra)
     {
-        // TODO QST-01: services.AddScoped<IRetrievalService, RetrievalService>();
-        // TODO QST-02: services.AddScoped<IQuestionGeneratorService, QuestionGeneratorService>();
-        // TODO QST-03: services.AddScoped<IQuestionService, QuestionService>();
+        services.AddScoped<IRetrievalService, RetrievalService>();
+        services.AddScoped<IQuestionGeneratorService, QuestionGeneratorService>();
+        services.AddScoped<IQuestionService, QuestionService>();
+        if (infra.IsFake) services.AddHostedService<QuestionSampleCorpusSeeder>();
         return services;
     }
 }

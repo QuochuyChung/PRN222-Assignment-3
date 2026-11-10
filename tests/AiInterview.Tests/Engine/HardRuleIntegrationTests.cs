@@ -241,7 +241,8 @@ public class HardRuleIntegrationTests
     [Fact]
     public async Task Without_A_Decider_The_Engine_Still_Completes_The_Interview()
     {
-        // Đây là cấu hình DI hiện tại: QST-02 (ILlmRepository) chưa xong nên IFollowUpDecider chưa đăng ký.
+        // Kiểm tra đường thoát an toàn: nếu IFollowUpDecider không resolve được (ví dụ lỗi cấu hình DI),
+        // engine vẫn chạy hết phiên thay vì ném lỗi giữa lượt thi.
         using var kit = new EngineTestKit(withDecider: false);
         await kit.SeedApprovedAsync(3);
         var session = await kit.RunAsync(s => s.CreateAsync(new CreateSessionRequest("S", "A", QuestionCount: 2)));

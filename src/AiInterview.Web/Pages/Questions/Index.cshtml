@@ -4,10 +4,37 @@
     ViewData["Title"] = "Question bank";
     ViewData["Active"] = "questions";
 }
-<div class="page-head">
-    <div>
-        <h1 class="page-title">Question bank</h1>
-        <p class="page-lead">Interview questions with a Bloom level, reference answer and key points.</p>
-    </div>
-</div>
-<partial name="_Placeholder" model="Model.Info" />
+<div class="page-head"><div><h1 class="page-title">Question bank</h1><p class="page-lead">Generate from indexed documents, then review before use.</p></div></div>
+@if (Model.Notice is not null) { <div class="alert alert-success">@Model.Notice</div> }
+@if (Model.Problem is not null) { <div class="alert alert-danger">@Model.Problem</div> }
+<section class="card p-4 mb-4"><h2 class="h5">Generate questions</h2>
+    <form method="post" asp-page-handler="Generate">
+        <label class="form-label" for="documentIds">Indexed documents</label>
+        <select class="form-select mb-3" id="documentIds" name="documentIds" multiple required size="@Math.Max(2, Math.Min(6, Model.Documents.Count))">
+            @foreach (var d in Model.Documents) { <option value="@d.Id">@d.FileName</option> }
+        </select>
+        <div class="row g-3 mb-3"><div class="col-md-3"><label class="form-label" for="count">Count</label><input class="form-control" type="number" id="count" name="count" min="1" max="20" value="3" required /></div>
+        <div class="col-md-9"><span class="form-label d-block">Bloom levels</span>@foreach (var level in Enum.GetValues<AiInterview.Common.Enums.BloomLevel>()) { <label class="me-3"><input type="checkbox" name="levels" value="@level" /> @level</label> }</div></div>
+        <button class="btn btn-primary" type="submit" disabled="@(Model.Documents.Count == 0)">Generate drafts</button>
+        @if (Model.Documents.Count == 0) { <span class="text-muted ms-2">Upload and index a document first.</span> }
+    </form>
+</section>
+<section><h2 class="h5">Questions (@Model.Questions.Count)</h2>
+@foreach (var q in Model.Questions) {
+    <article class="card p-4 mb-3"><div class="d-flex justify-content-between"><strong>@q.Content</strong><span class="badge text-bg-secondary">@q.Status · @q.BloomLevel</span></div>
+        <p class="mt-3 mb-1"><strong>Reference answer:</strong> @q.ReferenceAnswer</p>
+        <p class="mb-1"><strong>Key points:</strong> @string.Join("; ", q.KeyPoints)</p>
+        <p class="text-muted small">Source: @q.SourceDocumentId · chunks: @string.Join(", ", q.SourceChunkIds)</p>
+        @if (q.Status == AiInterview.Common.Enums.QuestionStatus.Draft) {
+            <details class="mb-3"><summary>Edit draft</summary><form class="mt-3" method="post" asp-page-handler="Update"><input type="hidden" name="id" value="@q.Id" />
+                <label class="form-label">Question</label><textarea class="form-control mb-2" name="content" required>@q.Content</textarea>
+                <label class="form-label">Reference answer</label><textarea class="form-control mb-2" name="referenceAnswer" required>@q.ReferenceAnswer</textarea>
+                <label class="form-label">Key points (one per line)</label><textarea class="form-control mb-2" name="keyPoints" required>@string.Join("\n", q.KeyPoints)</textarea>
+                <label class="form-label">Bloom level</label><select class="form-select mb-2" name="bloomLevel">@foreach (var level in Enum.GetValues<AiInterview.Common.Enums.BloomLevel>()) { <option value="@level" selected="@(level == q.BloomLevel)">@level</option> }</select>
+                <button class="btn btn-outline-primary" type="submit">Save changes</button></form></details>
+            <div class="d-flex gap-2"><form method="post" asp-page-handler="Approve"><input type="hidden" name="id" value="@q.Id" /><button class="btn btn-success" type="submit">Approve</button></form>
+            <form method="post" asp-page-handler="Reject"><input type="hidden" name="id" value="@q.Id" /><button class="btn btn-outline-warning" type="submit">Reject</button></form></div>
+        }
+        <form class="mt-2" method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this question?')"><input type="hidden" name="id" value="@q.Id" /><button class="btn btn-outline-danger btn-sm" type="submit">Delete</button></form>
+    </article>
+}</section>

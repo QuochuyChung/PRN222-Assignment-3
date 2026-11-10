@@ -95,18 +95,42 @@ public class InterviewRoomEndpointTests(WebApplicationFactory<Program> factory) 
         var session = await CreateSessionAsync();
         await PostJsonAsync<InterviewStateView>(client, $"handler=Start&sessionId={session.Id}");
 
+        // Không phụ thuộc câu hỏi nào được chọn: chỉ kiểm tra gửi lặp cùng turnId
+        // không được xử lý hai lần (không tiến câu, không tăng lượt xoáy).
         var turnId = Guid.NewGuid().ToString("N");
-        var first = await PostJsonAsync<SubmitAnswerResult>(client,
-            $"handler=SubmitAnswer&sessionId={session.Id}&turnId={turnId}&transcript=PageModel%20theo%20tung%20trang");
+        var url = $"handler=SubmitAnswer&sessionId={session.Id}&turnId={turnId}&transcript=PageModel%20theo%20tung%20trang";
 
+        var first = await PostJsonAsync<SubmitAnswerResult>(client, url);
         Assert.NotNull(first);
-        Assert.Equal(1, first!.State.QuestionIndex);
 
-        // Gửi lại cùng turnId: không tiến thêm câu.
-        var replay = await PostJsonAsync<SubmitAnswerResult>(client,
-            $"handler=SubmitAnswer&sessionId={session.Id}&turnId={turnId}&transcript=PageModel%20theo%20tung%20trang");
+        var replay = await PostJsonAsync<SubmitAnswerResult>(client, url);
+        Assert.NotNull(replay);
 
-        Assert.Equal(first.State.QuestionIndex, replay!.State.QuestionIndex);
+        Assert.Equal(first!.State.QuestionIndex, replay!.State.QuestionIndex);
+        Assert.Equal(first.State.FollowUpCount, replay.State.FollowUpCount);
+        Assert.Equal(first.State.IsFollowUp, replay.State.IsFollowUp);
+        Assert.Equal(first.State.State, replay.State.State);
+    }
+
+    [Fact]
+    public async Task SubmitAnswer_Partial_Answer_Stays_On_The_Question_With_A_Follow_Up()
+    {
+        // ENG-04 chạy thật ở chế độ Fake: câu trả lời mơ hồ -> luôn hỏi xoáy, chưa sang câu mới.
+        // Dùng kịch bản "mơ hồ" trong seed/engine/answers.md nên không phụ thuộc câu hỏi nào được chọn.
+        var client = Client;
+        var session = await CreateSessionAsync();
+        await PostJsonAsync<InterviewStateView>(client, $"handler=Start&sessionId={session.Id}");
+
+        var vague = "Cai%20do%20thi%20cung%20na%20na%20nhau%20thoi%20thay%2C%20em%20hoc%20roi%20nhung%20khong%20nho%20ro";
+        var result = await PostJsonAsync<SubmitAnswerResult>(client,
+            $"handler=SubmitAnswer&sessionId={session.Id}&turnId={Guid.NewGuid():N}&transcript={vague}");
+
+        Assert.NotNull(result);
+        Assert.Equal(0, result!.State.QuestionIndex);
+        Assert.True(result.State.IsFollowUp);
+        Assert.Equal(1, result.State.FollowUpCount);
+        Assert.NotNull(result.Decision);
+        Assert.True(result.Decision!.NeedFollowUp);
     }
 
     [Fact]
