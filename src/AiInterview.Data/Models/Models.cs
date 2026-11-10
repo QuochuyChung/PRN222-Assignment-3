@@ -70,6 +70,12 @@ public class SessionState
 
     /// <summary>Danh sách câu hỏi chính của phiên, theo thứ tự hỏi.</summary>
     public List<Guid> QuestionIds { get; set; } = new();
+
+    /// <summary>
+    /// Số lần đã nhắc vì im lặng trong câu hỏi hiện tại. Luật cứng ENG-05: nhắc một lần rồi bỏ qua câu.
+    /// Đếm lại từ 0 mỗi khi sang câu mới. Chỉ lưu trong Redis/in-memory, không thêm cột SQL.
+    /// </summary>
+    public int SilencePrompts { get; set; }
 }
 
 /// <summary>Một message trong Redis Stream.</summary>

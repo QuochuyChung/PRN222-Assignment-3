@@ -114,7 +114,8 @@ public sealed class RedisSessionStateRepository(IConnectionMultiplexer redis, IL
         new("questionId", state.QuestionId?.ToString() ?? ""),
         new("followUpCount", state.FollowUpCount.ToString(CultureInfo.InvariantCulture)),
         new("deadline", state.Deadline?.ToString("O", CultureInfo.InvariantCulture) ?? ""),
-        new("questionIds", JsonSerializer.Serialize(state.QuestionIds))
+        new("questionIds", JsonSerializer.Serialize(state.QuestionIds)),
+        new("silencePrompts", state.SilencePrompts.ToString(CultureInfo.InvariantCulture))
     ];
 
     private static SessionState Read(string sessionId, IReadOnlyDictionary<string, string> map)
@@ -135,7 +136,8 @@ public sealed class RedisSessionStateRepository(IConnectionMultiplexer redis, IL
                 : null,
             QuestionIds = string.IsNullOrWhiteSpace(questionIds)
                 ? new List<Guid>()
-                : JsonSerializer.Deserialize<List<Guid>>(questionIds) ?? new List<Guid>()
+                : JsonSerializer.Deserialize<List<Guid>>(questionIds) ?? new List<Guid>(),
+            SilencePrompts = int.TryParse(Get("silencePrompts"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var silence) ? silence : 0
         };
     }
 }

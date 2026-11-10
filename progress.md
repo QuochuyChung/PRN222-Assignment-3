@@ -75,7 +75,7 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 | ENG-02 | Dịch vụ phiên thi | Todo | | | |
 | ENG-03 | State machine | Review | | 2026-11-10 | `InterviewStateMachine` (internal static): bảng cạnh `AskQuestion → Listening → Evaluating → FollowUp \| NextQuestion \| Finished`, `Finished` là trạng thái cuối; test kiểm **mọi cặp 6×6** trạng thái |
 | ENG-04 | `IFollowUpDecider` | Review | | 2026-11-10 | `FollowUpDecider`: prompt + parse JSON Phụ lục C (bỏ hàng rào ```json```, JSON hỏng → không hỏi xoáy thay vì ném lỗi, `needFollowUp=true` mà thiếu câu hỏi → hạ false); 10 test với 3 kiểu trả lời (đủ ý / thiếu ý / mơ hồ). **Chưa đăng ký DI**: chờ QST-02 `ILlmRepository` |
-| ENG-05 | Luật cứng phía server | Todo | | | |
+| ENG-05 | Luật cứng phía server | Review | | 2026-11-10 | `HardRules`: hết giờ / hết lượt xoáy luôn thắng kết luận LLM, `RemainingSeconds` tính từ deadline tuyệt đối và không âm, im lặng nhắc 1 lần rồi bỏ qua câu. Thêm field `SilencePrompts` vào `SessionState` (chỉ lưu Redis/in-memory, **không** đổi entity/migration) |
 | ENG-06 | Chống trùng theo `turnId` | Todo | | | |
 | ENG-07 | Endpoint phiên thi | Todo | | | |
 | ENG-08 | `ITurnPublisher` | Review | | 2026-11-10 | `TurnPublisher` gọi `EnsureGroupAsync` + `PublishAsync(turns-stream, turn.ToFields())`; test round-trip `ToFields` → `FromFields` và lỗi hàng đợi được log rồi ném lại |

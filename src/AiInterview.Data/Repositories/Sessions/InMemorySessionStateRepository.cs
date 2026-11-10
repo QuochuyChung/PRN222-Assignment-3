@@ -66,7 +66,8 @@ public sealed class InMemorySessionStateRepository : ISessionStateRepository
         QuestionId = source.QuestionId,
         FollowUpCount = source.FollowUpCount,
         Deadline = source.Deadline,
-        QuestionIds = source.QuestionIds.ToList()
+        QuestionIds = source.QuestionIds.ToList(),
+        SilencePrompts = source.SilencePrompts
     };
 
     private sealed class Entry(SessionState state, DateTime expiresAt)
