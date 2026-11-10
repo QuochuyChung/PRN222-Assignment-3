@@ -37,7 +37,21 @@ internal sealed class FollowUpDecider(ILlmRepository llm, ILogger<FollowUpDecide
             return NoFollowUp("Sinh viên không trả lời (transcript rỗng).");
         }
 
-        var raw = await llm.GenerateJsonAsync(SystemInstruction, BuildUserPrompt(request), ct);
+        string raw;
+        try
+        {
+            raw = await llm.GenerateJsonAsync(SystemInstruction, BuildUserPrompt(request), ct);
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            // Mạng đứt, hết hạn mức, key sai hoặc quá thời gian chờ không được làm hỏng lượt thi của thí sinh:
+            // ghi log rồi coi như đủ ý để phiên vẫn chuyển câu. Khi chính người dùng hủy request (ct) thì để lỗi đi tiếp.
+            logger.Error(ex, File, ServiceNames.Gemini,
+                "Không gọi được LLM, coi như không cần hỏi xoáy để lượt thi vẫn tiếp tục, followUpCount={FollowUpCount}",
+                request.FollowUpCount);
+            return NoFollowUp("Không gọi được LLM, tạm coi như đủ ý.");
+        }
+
         var decision = Parse(raw);
 
         logger.Info(File, ServiceNames.Gemini,

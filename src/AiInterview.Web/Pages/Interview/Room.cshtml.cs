@@ -98,5 +98,10 @@ public class RoomModel(IInterviewSessionService interviews) : PageModel
             // Phiên đã kết thúc / chưa chạy / ngân hàng câu hỏi không đủ.
             return new ConflictObjectResult(new { error = ex.Message });
         }
+        catch (HttpRequestException ex)
+        {
+            // Một dịch vụ bên ngoài (ví dụ Gemini, Ollama) không phản hồi: 502 kèm lý do thay vì 500 thân rỗng.
+            return new ObjectResult(new { error = "Dịch vụ bên ngoài không phản hồi: " + ex.Message }) { StatusCode = StatusCodes.Status502BadGateway };
+        }
     }
 }

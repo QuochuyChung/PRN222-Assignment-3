@@ -259,6 +259,21 @@
         }
     }
 
+    // Server trả lỗi dạng { error } (mã 400/404/409/502) hoặc thân rỗng (500, hoặc 400 khi token chống giả mạo hết hạn).
+    // Đọc đúng trường và không bao giờ để việc đọc JSON tự nó văng lỗi khó hiểu.
+    async function readServerError(resp) {
+        let detail = '';
+        try {
+            const body = await resp.json();
+            detail = body.error || body.message || '';
+        } catch (e) { /* thân phản hồi không phải JSON */ }
+
+        if (detail) return detail;
+        if (resp.status === 400) return 'Trang đã hết hạn (máy chủ vừa khởi động lại). Hãy tải lại trang (F5) rồi trả lời lại.';
+        if (resp.status >= 500) return 'Máy chủ gặp lỗi (HTTP ' + resp.status + '). Hãy thử lại sau ít phút.';
+        return 'Lỗi gửi câu trả lời (HTTP ' + resp.status + ')';
+    }
+
     async function submitAnswer(transcript) {
         stopCountdown();
         window.AiTts.stop();
@@ -288,8 +303,7 @@
             });
 
             if (!resp.ok) {
-                const err = await resp.json();
-                throw new Error(err.message || 'Lỗi gửi câu trả lời');
+                throw new Error(await readServerError(resp));
             }
 
             const result = await resp.json();
