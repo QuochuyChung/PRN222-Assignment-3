@@ -78,7 +78,7 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 | ENG-05 | Luật cứng phía server | Todo | | | |
 | ENG-06 | Chống trùng theo `turnId` | Todo | | | |
 | ENG-07 | Endpoint phiên thi | Todo | | | |
-| ENG-08 | `ITurnPublisher` | Todo | | | `TurnMessage` đã có |
+| ENG-08 | `ITurnPublisher` | Review | | 2026-11-10 | `TurnPublisher` gọi `EnsureGroupAsync` + `PublishAsync(turns-stream, turn.ToFields())`; test round-trip `ToFields` → `FromFields` và lỗi hàng đợi được log rồi ném lại |
 | ENG-09 | Khôi phục khi F5 | Todo | | | |
 | ENG-10 | Seed và test engine | Todo | | | |
 
