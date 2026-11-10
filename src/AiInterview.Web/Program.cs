@@ -21,13 +21,19 @@ if (infra.RunsWeb)
 
     // By default Razor encodes non-ASCII characters (e.g. Vietnamese sample data) as &#x...;. Allow all Unicode ranges.
     builder.Services.AddWebEncoders(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
+}
 
+// SignalR is needed by BOTH roles. The web role hosts the hub (MapHubs below). The worker role only publishes
+// progress: it never maps the hub, but through the Redis backplane its messages reach the browsers connected to the web pods.
+// Without this the worker keeps the no-op notifier and the Documents page never hears that processing finished.
+if (infra.RunsWeb || infra.RunsWorker)
+{
     var signalR = builder.Services.AddSignalR();
     builder.Services.AddHubServices();
     var redis = builder.Configuration["Redis:ConnectionString"];
     if (infra.IsReal && !string.IsNullOrWhiteSpace(redis))
     {
-        // Several web pods need a backplane so SignalR reaches the right client.
+        // Several pods (web and worker) share one backplane so SignalR reaches the right client.
         signalR.AddStackExchangeRedis(redis);
     }
 }

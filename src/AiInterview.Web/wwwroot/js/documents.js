@@ -126,7 +126,17 @@
     connection.onreconnected(function () { stopPolling(); setNote('live', 'Live updates on.'); sync(); });
     connection.onclose(startPolling);
 
+    // Safety net: even with a live connection, re-check slowly while something is processing, so a missed push
+    // (for example the worker finished before this page connected) can never leave a row stuck on "Processing".
+    var safetyTimer = null;
+    function startSafetyPoll() {
+        if (safetyTimer) return;
+        safetyTimer = setInterval(function () {
+            if (document.querySelector('tr[data-status="Processing"]')) sync();
+        }, 10000);
+    }
+
     connection.start()
-        .then(function () { setNote('live', 'Live updates on.'); sync(); })
+        .then(function () { setNote('live', 'Live updates on.'); sync(); startSafetyPoll(); })
         .catch(startPolling);
 })();

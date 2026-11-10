@@ -542,3 +542,170 @@ imagePullSecrets:
   - name: harbor-pull
 ```
 
+Clone Source về máy có docker và build docker image lên
+
+```bash
+git clone https://github.com/QuochuyChung/PRN222-Assignment-3.git
+```
+
+```bash
+docker build -t harbor.huydevops.id.vn/ai-interview/app:0.1.0 .
+```
+
+Push lên registry harbor
+
+Trước đó phải tạp project trong harbor
+
+1. Mở giao diện Harbor (https://harbor.huydevops.id.vn), đăng nhập.
+2. Vào Projects → New Project.
+3. Project Name: ai-interview (đúng chính tả, chữ thường).
+4. Access Level: chọn Private nếu muốn dùng pull secret như đã chuẩn bị, hoặc Public nếu muốn khỏi cần secret.
+5. Bấm OK.
+
+```bash
+docker push harbor.huydevops.id.vn/ai-interview/app:0.1.0
+```
+
+**Tag**: 0.1.0
+**Image Name**: harbor.huydevops.id.vn/ai-interview/app
+
+Lưu ý phần chart nên tạo ra 1 file values ở dưới trước khi chạy helm để đè lên file values cũ
+
+Trước tiên ngay tại máy có docker thì cài thêm helm để đóng gói app đó lại rồi đưa lên registry
+hoặc là clone source về máy kubernetes để xài luôn
+
+Cài helm
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | DESIRED_VERSION=v3.16.4 bash
+```
+
+Kiểm tra version
+```bash
+helm version --short
+```
+
+
+Kiểm tra chart
+```bash
+quochuy2909@deploy-server:~/asg3-prn222/PRN222-Assignment-3$ helm lint helm/ai-interview
+==> Linting helm/ai-interview
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+```
+
+Đóng gói chart thành **.tgz**
+```bash
+helm package helm/ai-interview --version 0.1.0 --app-version 0.1.0
+```
+
+Đăng nhập vào bên trong Harbor
+```bash
+helm registry login harbor.huydevops.id.vn
+```
+
+Push chart lên registry
+```bash
+helm push ai-interview-0.1.0.tgz oci://harbor.huydevops.id.vn/ai-interview
+```
+
+Kiểm tra chart đã nằm trên Harbor chưa
+```bash
+quochuy2909@deploy-server:~/asg3-prn222/PRN222-Assignment-3$ helm show chart oci://harbor.huydevops.id.vn/ai-interview/ai-interview --version 0.1.0
+Pulled: harbor.huydevops.id.vn/ai-interview/ai-interview:0.1.0
+Digest: sha256:adabcf18bf3c63fb7548ac3b934cf3f7f12ed7a8c491a4f366912ed299ded5bf
+apiVersion: v2
+appVersion: 0.1.0
+description: AI Interview (vấn đáp bằng giọng nói) - hai Deployment web và worker
+  dùng chung một image
+name: ai-interview
+type: application
+version: 0.1.0
+```
+
+Sau khi push chart xong bắt đầu qua con máy k8s
+
+Kiểm tra phiên bản của Eso để điền đúng apiVersion trong chart
+
+```bash
+kubectl get crd externalsecrets.external-secrets.io -o jsonpath='{.spec.versions[*].name}'
+```
+
+Nếu kết quả có v1 (và không có v1beta1), thêm dòng apiVersion: external-secrets.io/v1 vào file values ở bước 2.
+
+
+Tạo file values-prod.yaml riêng để ghi đè vào chart
+
+```bash
+vi values-prod.yaml
+```
+
+
+```yaml
+image:
+  tag: "0.1.0"
+
+imagePullSecrets:
+  - name: harbor-pull
+
+ingress:
+  host: ai-interview.huydevops.id.vn
+
+externalSecret:
+  apiVersion: external-secrets.io/v1
+```
+
+Lưu lại rồi sau đó chạy chart kèm theo file yaml mới ghi đè lúc nãy
+```bash
+helm upgrade --install ai-interview oci://harbor.huydevops.id.vn/ai-interview/ai-interview --version 0.1.0 -n ai-interview -f values-prod.yaml
+```
+
+OUTPUT:
+```bash
+quochuy@kubernetes1:~/asg3-prn222-chart$ helm upgrade --install ai-interview oci://harbor.huydevops.id.vn/ai-interview/ai-interview --version 0.1.0 -n ai-interview -f values-prod.yaml
+Release "ai-interview" does not exist. Installing it now.
+Pulled: harbor.huydevops.id.vn/ai-interview/ai-interview:0.1.0
+Digest: sha256:adabcf18bf3c63fb7548ac3b934cf3f7f12ed7a8c491a4f366912ed299ded5bf
+NAME: ai-interview
+LAST DEPLOYED: Tue Nov 10 19:26:25 2026
+NAMESPACE: ai-interview
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+```
+
+Kiểm tra ESO và secret từ vault
+```bash
+quochuy@kubernetes1:~/asg3-prn222-chart$ kubectl -n ai-interview get externalsecret
+NAME                   STORETYPE            STORE   REFRESH INTERVAL   STATUS         READY   LAST SYNC
+ai-interview-secrets   ClusterSecretStore   vault   1h                 SecretSynced   True    49s
+```
+
+Cột STATUS phải là SecretSynced và READY là True.
+
+ExternalSecret SecretSynced, READY True: ESO đã lấy được secret từ Vault và tạo Secret trong cluster.
+
+Kiểm tra hạ tầng
+```bash
+quochuy@kubernetes1:~/asg3-prn222-chart$ kubectl -n ai-interview get pods
+NAME                                   READY   STATUS    RESTARTS   AGE
+ai-interview-web-7955bf665c-rdps4      1/1     Running   0          108s
+ai-interview-worker-68c4bcd6bc-2fmp7   1/1     Running   0          108s
+```
+
+Kiểm tra kết nối healthy
+1 cửa sổ
+```bash
+quochuy@kubernetes1:~/asg3-prn222-chart$ kubectl -n ai-interview port-forward svc/ai-interview-web 8080:80
+Forwarding from 127.0.0.1:8080 -> 8080
+Forwarding from [::1]:8080 -> 8080
+Handling connection for 8080
+```
+
+1 cửa sổ khác mở song song và chạy
+```bash
+quochuy@kubernetes1:~$ curl -s http://localhost:8080/health/ready
+Healthy
+```
