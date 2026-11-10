@@ -1,5 +1,5 @@
 using AiInterview.Common.Logging;
-using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 using AiInterview.Data.Repositories.Documents;
 using AiInterview.Data.Repositories.Questions;
 using AiInterview.Data.Repositories.Sessions;
@@ -34,7 +34,7 @@ public interface IDashboardService
 /// Ví dụ chuẩn của kiến trúc 3 lớp: PageModel -> Service -> Repository.
 /// Service chỉ gọi interface repository, không biết đang chạy Fake hay Real.
 /// </summary>
-public sealed class DashboardService(
+internal sealed class DashboardService(
     IDocumentRepository documents,
     IQuestionRepository questions,
     ISessionRepository sessions,

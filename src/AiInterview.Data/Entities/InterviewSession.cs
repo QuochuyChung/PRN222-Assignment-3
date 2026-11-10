@@ -1,3 +1,5 @@
+using AiInterview.Common.Enums;
+
 namespace AiInterview.Data.Entities;
 
 public class InterviewSession

@@ -1,4 +1,5 @@
 using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 
 namespace AiInterview.Data.Repositories.Sessions;
 

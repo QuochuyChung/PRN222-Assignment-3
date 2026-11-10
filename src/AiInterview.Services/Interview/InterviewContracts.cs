@@ -1,7 +1,19 @@
-using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 using AiInterview.Services.Retrieval;
 
 namespace AiInterview.Services.Interview;
+
+public sealed record SessionDto(
+    Guid Id,
+    string Title,
+    string StudentName,
+    SessionStatus Status,
+    int QuestionCount,
+    int MaxFollowUps,
+    int AnswerSeconds,
+    DateTime CreatedAt,
+    DateTime? StartedAt,
+    DateTime? CompletedAt);
 
 public sealed record CreateSessionRequest(
     string Title,
@@ -48,7 +60,7 @@ public sealed record FollowUpDecision(
 /// <summary>Vòng đời phiên thi và state machine. Dev C (ENG-02, ENG-03, ENG-05..07, ENG-09).</summary>
 public interface IInterviewSessionService
 {
-    Task<InterviewSession> CreateAsync(CreateSessionRequest request, CancellationToken ct = default);
+    Task<SessionDto> CreateAsync(CreateSessionRequest request, CancellationToken ct = default);
 
     Task<InterviewStateView> StartAsync(Guid sessionId, CancellationToken ct = default);
 

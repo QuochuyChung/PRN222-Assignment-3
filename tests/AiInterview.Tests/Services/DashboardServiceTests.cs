@@ -1,5 +1,6 @@
 using AiInterview.Data;
 using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 using AiInterview.Data.Models;
 using AiInterview.Data.Repositories.Documents;
 using AiInterview.Data.Repositories.Questions;

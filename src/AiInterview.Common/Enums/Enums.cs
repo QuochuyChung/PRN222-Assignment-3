@@ -1,4 +1,4 @@
-namespace AiInterview.Data.Entities;
+namespace AiInterview.Common.Enums;
 
 public enum DocumentStatus
 {

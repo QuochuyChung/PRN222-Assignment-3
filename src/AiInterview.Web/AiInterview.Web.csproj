@@ -8,10 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="8.0.33" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.33" />
   </ItemGroup>
 
+  <!-- Web chỉ tham chiếu Services và Common. KHÔNG tham chiếu Data (và Services cũng không cho lộ Data ra). -->
   <ItemGroup>
+    <ProjectReference Include="..\AiInterview.Common\AiInterview.Common.csproj" />
     <ProjectReference Include="..\AiInterview.Services\AiInterview.Services.csproj" />
   </ItemGroup>
 

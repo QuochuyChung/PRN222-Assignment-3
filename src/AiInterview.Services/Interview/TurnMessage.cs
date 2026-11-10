@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 
 namespace AiInterview.Services.Interview;
 
@@ -59,7 +60,7 @@ public sealed record TurnMessage(
             EndedAt: DateTime.Parse(Get("endedAt"), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
     }
 
-    public InterviewTurn ToEntity() => new()
+    internal InterviewTurn ToEntity() => new()
     {
         TurnId = TurnId,
         SessionId = SessionId,

@@ -1,4 +1,5 @@
 using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace AiInterview.Data.Repositories.Turns;

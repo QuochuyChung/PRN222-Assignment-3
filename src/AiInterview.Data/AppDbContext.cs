@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

@@ -11,6 +11,15 @@
 - Mọi lời gọi hạ tầng ngoài (SQL, Mongo, Qdrant, Redis, MinIO, **Gemini**) nằm trong Repository.
 - Prompt, parse JSON của LLM, state machine, luật cứng nằm ở Service. Repository chỉ trả JSON thô / dữ liệu.
 
+### Ranh giới được khóa bằng máy (đừng cố lách)
+
+- **`AiInterview.Web` không nhìn thấy `AiInterview.Data`** (`Services.csproj` tham chiếu Data với `PrivateAssets="compile"`). Viết `using AiInterview.Data...` trong Web sẽ lỗi biên dịch. Đừng đổi tham chiếu project để "cho chạy".
+- **Service trả DTO** (`QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`...), **không bao giờ trả entity/model của Data** (`Question`, `InterviewTurn`, `DocumentRecord`...). Map bằng `Services/Mapping/EntityMappers.cs`.
+- **Enum dùng chung** (`QuestionStatus`, `BloomLevel`, `SessionStatus`, `InterviewState`, `DocumentStatus`) nằm ở `AiInterview.Common.Enums`, mọi lớp dùng được.
+- **Cài đặt service là `internal sealed`**, chỉ interface và DTO là `public`. Test truy cập được nhờ `InternalsVisibleTo`.
+- Web ráp ứng dụng chỉ qua `AddServices(...)` và `InitializeApplicationAsync(...)`; lớp Data được đăng ký bên trong Services.
+- `tests/AiInterview.Tests/Architecture/ArchitectureTests.cs` kiểm tra các luật trên. Test đỏ nghĩa là bạn đã phá ranh giới — sửa code, **không sửa test**.
+
 ## Fake / Real
 
 - `Infra:Mode=Fake` là mặc định ở máy dev: không cần Redis/Mongo/Qdrant/MinIO/Gemini thật. Phải chạy được `dotnet run --project src/AiInterview.Web` và `dotnet test` ở chế độ này.

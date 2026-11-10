@@ -1,7 +1,20 @@
-using AiInterview.Data.Entities;
-using AiInterview.Data.Models;
+using AiInterview.Common.Enums;
 
 namespace AiInterview.Services.Documents;
+
+/// <summary>Tài liệu trả cho giao diện. Không chứa chi tiết nội bộ như key lưu trữ.</summary>
+public sealed record DocumentDto(
+    string Id,
+    string FileName,
+    string ContentType,
+    long Size,
+    DocumentStatus Status,
+    string? ErrorMessage,
+    int ChunkCount,
+    int PageCount,
+    string? UploadedBy,
+    DateTime UploadedAt,
+    DateTime UpdatedAt);
 
 public sealed record UploadDocumentRequest(string FileName, string ContentType, Stream Content, long Size, string? UploadedBy);
 
@@ -14,14 +27,15 @@ public sealed record ChunkDraft(int ChunkIndex, int Page, string Text);
 /// <summary>
 /// Quản lý tài liệu cho trang upload/danh sách. Dev A (ING-02, ING-08).
 /// Upload: lưu file (IFileRepository) -> ghi metadata Processing (IDocumentRepository) -> đẩy docs-stream. Đúng thứ tự này.
+/// Trả <see cref="DocumentDto"/>, không trả model của lớp Data.
 /// </summary>
 public interface IDocumentService
 {
-    Task<DocumentRecord> UploadAsync(UploadDocumentRequest request, CancellationToken ct = default);
+    Task<DocumentDto> UploadAsync(UploadDocumentRequest request, CancellationToken ct = default);
 
-    Task<IReadOnlyList<DocumentRecord>> ListAsync(DocumentStatus? status = null, CancellationToken ct = default);
+    Task<IReadOnlyList<DocumentDto>> ListAsync(DocumentStatus? status = null, CancellationToken ct = default);
 
-    Task<DocumentRecord?> GetAsync(string id, CancellationToken ct = default);
+    Task<DocumentDto?> GetAsync(string id, CancellationToken ct = default);
 
     /// <summary>Xóa ở cả metadata, vector và file gốc trong một hàm duy nhất.</summary>
     Task DeleteAsync(string id, CancellationToken ct = default);

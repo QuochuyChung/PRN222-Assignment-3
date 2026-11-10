@@ -59,6 +59,14 @@ Pages/*.cshtml.cs (PageModel)  →  Service  →  Repository  →  SQL / Mongo /
 
 Phụ thuộc một chiều: `Web → Services → Data → Common`. Ví dụ: `Pages/Index.cshtml.cs` → `IDashboardService` → `IQuestionRepository` / `ISessionRepository`...
 
+**Ranh giới được khóa bằng máy (không thể lách):**
+
+- **Web không nhìn thấy Data.** `Services.csproj` tham chiếu Data với `PrivateAssets="compile"`; viết `using AiInterview.Data...` trong Web là lỗi biên dịch. Web chỉ ráp ứng dụng qua `AddServices(...)` / `InitializeApplicationAsync(...)`.
+- **Service trả DTO, không trả entity.** `QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`... nằm trong `AiInterview.Services`; entity/model của Data (`Question`, `InterviewTurn`, `DocumentRecord`...) không lộ ra ngoài Services. Map bằng `Services/Mapping/EntityMappers.cs`.
+- **Enum dùng chung ở `AiInterview.Common.Enums`:** `QuestionStatus`, `BloomLevel`, `SessionStatus`, `InterviewState`, `DocumentStatus`.
+- **Cài đặt service là `internal sealed`**; chỉ interface và DTO là `public`.
+- **Architecture test** (`tests/AiInterview.Tests/Architecture`) làm `dotnet test` đỏ nếu: Web tham chiếu Data; Data tham chiếu ngược Services/Web; Services tham chiếu Web; API public của Services lộ kiểu của Data; PageModel dùng repository. Test đỏ thì sửa code, không sửa test.
+
 ---
 
 ## 2. Quy ước làm việc
@@ -313,7 +321,9 @@ Nguồn gốc là code trong repo; phần này chỉ tóm tắt. Muốn đổi i
 | `IFollowUpDecider` | Quyết định hỏi xoáy (prompt + gọi `ILlmRepository`) | Dev C |
 | `ITurnPublisher` + `TurnMessage` | Đẩy lượt vào `turns-stream`; `TurnMessage` có sẵn `ToFields()` / `FromFields()` / `ToEntity()` để publisher và consumer không lệch định dạng | Dev C (publisher), Dev B (consumer) |
 
-**Luồng gọi:** `PageModel` (`*.cshtml.cs`) → `Service` → `Repository`. PageModel không gọi repository trực tiếp.
+**Luồng gọi:** `PageModel` (`*.cshtml.cs`) → `Service` → `Repository`. PageModel không gọi repository trực tiếp, và không thể: Web không tham chiếu được Data.
+
+**DTO của Service** (trả cho Web): `DocumentDto` (`IDocumentService`), `QuestionDto` + `UpdateQuestionRequest` (`IQuestionService`), `SessionDto` + `InterviewStateView` (`IInterviewSessionService`), `TurnDto` (`ITurnLogService`), `DashboardSummary` (`IDashboardService`). `TurnMessage.ToEntity()` là `internal` vì trả entity của Data.
 
 ## Phụ lục B — Định dạng dữ liệu
 

@@ -20,6 +20,13 @@ Pages/*.cshtml.cs (PageModel)  →  Service  →  Repository  →  SQL / Mongo /
 
 Phụ thuộc một chiều: `Web → Services → Data → Common`.
 
+**Ranh giới được khóa bằng máy:**
+
+- Web **không nhìn thấy** Data: `Services.csproj` tham chiếu Data với `PrivateAssets="compile"`, nên `using AiInterview.Data...` trong Web là lỗi biên dịch. Web chỉ ráp ứng dụng qua `AddServices(...)` và `InitializeApplicationAsync(...)`.
+- Service trả **DTO** (`QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`...), không trả entity của Data. Cài đặt service là `internal`, chỉ interface và DTO là `public`.
+- Enum dùng chung (`QuestionStatus`, `BloomLevel`, `SessionStatus`, `InterviewState`, `DocumentStatus`) nằm ở `AiInterview.Common.Enums`.
+- `tests/AiInterview.Tests/Architecture/ArchitectureTests.cs` kiểm tra các luật trên; vi phạm thì `dotnet test` đỏ.
+
 ## Chạy thử (chế độ Fake)
 
 Chế độ Fake dùng dữ liệu giả trong bộ nhớ (SQLite in-memory + repository in-memory), **không cần** Redis, Mongo, Qdrant, MinIO hay Gemini.

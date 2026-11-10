@@ -1,4 +1,5 @@
 using AiInterview.Data.Entities;
+using AiInterview.Common.Enums;
 using AiInterview.Data.Models;
 
 namespace AiInterview.Data.Repositories.Documents;

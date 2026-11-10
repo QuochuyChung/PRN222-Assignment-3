@@ -1,9 +1,6 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using AiInterview.Common.Configuration;
-using AiInterview.Data;
-using AiInterview.Data.Registration;
-using AiInterview.Data.Seeding;
 using AiInterview.Services.Registration;
 using AiInterview.Web.Hubs;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -15,11 +12,8 @@ var infra = InfraOptions.From(builder.Configuration);
 builder.Services.AddSingleton(infra);
 
 // Kiến trúc 3 lớp: PageModel -> Service -> Repository.
-builder.Services.AddData(builder.Configuration, infra);   // lớp Repository (Fake/Real)
-builder.Services.AddServices(infra);                       // lớp Service
-
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>("sql", tags: new[] { "ready" });
+// Web chỉ biết lớp Service: AddServices tự đăng ký cả lớp Repository bên trong.
+builder.Services.AddServices(builder.Configuration, infra);
 
 if (infra.RunsWeb)
 {
@@ -39,7 +33,7 @@ if (infra.RunsWeb)
 
 var app = builder.Build();
 
-await app.Services.InitializeDatabaseAsync(infra, app.Configuration);
+await app.Services.InitializeApplicationAsync(infra, app.Configuration);
 
 if (infra.RunsWeb)
 {
@@ -54,7 +48,7 @@ if (infra.RunsWeb)
     app.MapHubs();
 }
 
-// Probe cho Kubernetes: live = tiến trình còn sống, ready = kết nối được SQL.
+// Probe cho Kubernetes: live = tiến trình còn sống, ready = kết nối được SQL (kiểm tra đăng ký trong lớp Data).
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 

@@ -24,6 +24,9 @@ public static class DataServiceCollectionExtensions
 
         services.AddSqlDatabase(configuration, infra);
 
+        // Readiness probe: kết nối được SQL. Đăng ký ở lớp Data để Web không phải biết AppDbContext.
+        services.AddHealthChecks().AddDbContextCheck<AppDbContext>("sql", tags: new[] { "ready" });
+
         if (infra.IsReal)
         {
             services.AddSharedClients();

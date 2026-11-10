@@ -11,7 +11,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AiInterview.Data\AiInterview.Data.csproj" />
+    <ProjectReference Include="..\AiInterview.Common\AiInterview.Common.csproj" />
+
+    <!-- PrivateAssets="compile": Data CHỈ dùng nội bộ trong Services. Project nào tham chiếu Services (ví dụ Web)
+         sẽ KHÔNG nhìn thấy Data lúc biên dịch, nên PageModel không thể gọi repository dù cố ý. -->
+    <ProjectReference Include="..\AiInterview.Data\AiInterview.Data.csproj" PrivateAssets="compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AiInterview.Tests" />
   </ItemGroup>
 
 </Project>
