@@ -201,6 +201,9 @@ internal sealed class InterviewSessionService(
         var session = await LoadSessionAsync(request.SessionId, ct);
         var state = await LoadStateAsync(request.SessionId, ct);
 
+        // Chỉ phiên đang chạy mới nhận câu trả lời; phiên Created nghĩa là client chưa gọi start.
+        EnsureRunning(session);
+
         if (state.State is InterviewState.Finished)
         {
             throw new InvalidOperationException("This interview has already finished.");
@@ -243,6 +246,8 @@ internal sealed class InterviewSessionService(
     {
         var session = await LoadSessionAsync(sessionId, ct);
         var state = await LoadStateAsync(sessionId, ct);
+
+        EnsureRunning(session);
 
         if (state.State is InterviewState.Finished)
         {
@@ -477,6 +482,18 @@ internal sealed class InterviewSessionService(
 
     private async Task<Data.Entities.InterviewSession> LoadSessionAsync(Guid sessionId, CancellationToken ct)
         => await sessions.GetAsync(sessionId, ct) ?? throw new KeyNotFoundException($"Interview {sessionId} was not found.");
+
+    /// <summary>Chỉ phiên <c>InProgress</c> mới nhận câu trả lời / skip. Phiên <c>Created</c> phải gọi start trước.</summary>
+    private static void EnsureRunning(Data.Entities.InterviewSession session)
+    {
+        if (session.Status != SessionStatus.InProgress)
+        {
+            throw new InvalidOperationException(
+                session.Status == SessionStatus.Created
+                    ? "This interview has not started yet."
+                    : $"This interview is already {session.Status}.");
+        }
+    }
 
     private async Task<SessionState> LoadStateAsync(Guid sessionId, CancellationToken ct)
         => await states.GetAsync(sessionId.ToString(), ct)

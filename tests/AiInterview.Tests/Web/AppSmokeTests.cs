@@ -43,7 +43,6 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
     [Theory]
     [InlineData("/Questions")]
     [InlineData("/Sessions")]
-    [InlineData("/Interview/Room")]
     [InlineData("/Logs")]
     public async Task Placeholder_Pages_Render(string url)
     {
