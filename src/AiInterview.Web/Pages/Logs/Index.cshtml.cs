@@ -1,17 +1,16 @@
-using AiInterview.Web.Pages.Shared;
+using AiInterview.Services.TurnLog;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AiInterview.Web.Pages.Logs;
 
-// Dev B — LOG-02 (xem log một phiên thi). Inject ITurnLogService vào constructor.
-public class IndexModel : PageModel
+public class IndexModel(ITurnLogService turns) : PageModel
 {
-    public PlaceholderInfo Info { get; } = new(
-        "Dev B",
-        "LOG-02",
-        "See the questions, transcripts, follow-ups, reasons and cited sources of each session.");
+    public IReadOnlyList<TurnDto> Turns { get; private set; } = [];
+    public Guid? SessionId { get; private set; }
 
-    public void OnGet()
+    public async Task OnGetAsync(Guid? sessionId, CancellationToken ct)
     {
+        SessionId = sessionId;
+        Turns = sessionId is { } id ? await turns.ListBySessionAsync(id, ct) : await turns.ListRecentAsync(30, ct);
     }
 }
