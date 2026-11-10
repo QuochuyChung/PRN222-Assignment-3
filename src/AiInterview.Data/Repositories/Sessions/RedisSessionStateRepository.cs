@@ -115,7 +115,10 @@ public sealed class RedisSessionStateRepository(IConnectionMultiplexer redis, IL
         new("followUpCount", state.FollowUpCount.ToString(CultureInfo.InvariantCulture)),
         new("deadline", state.Deadline?.ToString("O", CultureInfo.InvariantCulture) ?? ""),
         new("questionIds", JsonSerializer.Serialize(state.QuestionIds)),
-        new("silencePrompts", state.SilencePrompts.ToString(CultureInfo.InvariantCulture))
+        new("silencePrompts", state.SilencePrompts.ToString(CultureInfo.InvariantCulture)),
+        new("currentQuestionText", state.CurrentQuestionText ?? ""),
+        new("isFollowUp", state.IsFollowUp.ToString()),
+        new("turnStartedAt", state.TurnStartedAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")
     ];
 
     private static SessionState Read(string sessionId, IReadOnlyDictionary<string, string> map)
@@ -137,7 +140,12 @@ public sealed class RedisSessionStateRepository(IConnectionMultiplexer redis, IL
             QuestionIds = string.IsNullOrWhiteSpace(questionIds)
                 ? new List<Guid>()
                 : JsonSerializer.Deserialize<List<Guid>>(questionIds) ?? new List<Guid>(),
-            SilencePrompts = int.TryParse(Get("silencePrompts"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var silence) ? silence : 0
+            SilencePrompts = int.TryParse(Get("silencePrompts"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var silence) ? silence : 0,
+            CurrentQuestionText = Get("currentQuestionText") is { Length: > 0 } text ? text : null,
+            IsFollowUp = bool.TryParse(Get("isFollowUp"), out var isFollowUp) && isFollowUp,
+            TurnStartedAt = DateTime.TryParse(Get("turnStartedAt"), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var turnStarted)
+                ? turnStarted
+                : null
         };
     }
 }

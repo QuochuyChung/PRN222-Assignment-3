@@ -16,10 +16,15 @@ internal static class EngineRepositoryRegistration
         {
             // Singleton vì giữ trạng thái trong bộ nhớ (giống Redis dùng chung giữa các request).
             services.AddSingleton<ISessionStateRepository, InMemorySessionStateRepository>();
+            services.AddSingleton<IQuestionUsageRepository, InMemoryQuestionUsageRepository>();
+
+            // ENG-10: câu hỏi mẫu đã duyệt để tạo được phiên nhiều câu trên máy dev.
+            services.AddScoped<IDataSeeder, EngineDataSeeder>();
         }
         else
         {
             services.AddSingleton<ISessionStateRepository, RedisSessionStateRepository>();
+            services.AddSingleton<IQuestionUsageRepository, RedisQuestionUsageRepository>();
         }
 
         return services;
