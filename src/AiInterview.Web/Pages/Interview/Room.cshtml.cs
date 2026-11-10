@@ -1,6 +1,5 @@
 using AiInterview.Common.Enums;
 using AiInterview.Services.Interview;
-using AiInterview.Web.Pages.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -20,19 +19,24 @@ namespace AiInterview.Web.Pages.Interview;
 // "RequestVerificationToken". Lỗi trả về JSON { error } với mã 400/404/409.
 public class RoomModel(IInterviewSessionService interviews) : PageModel
 {
-    /// <summary>Thông tin trang khung — Dev D bỏ khi thay phần thân trang bằng UI thật.</summary>
-    public PlaceholderInfo Info { get; } = new(
-        "Dev D (UI) + Dev C (endpoints)",
-        "UI-03..UI-07, ENG-07",
-        "The AI reads the question aloud, the student answers by voice, and the AI asks follow-ups within the time and turn limits.");
+    public SessionDto? Session { get; private set; }
 
     /// <summary>Trạng thái hiện tại, nạp sẵn khi tải trang để F5 không mất phiên (ENG-09).</summary>
     public InterviewStateView? State { get; private set; }
+
+    public string? ErrorMessage { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(Guid? sessionId, CancellationToken ct)
     {
         if (sessionId is null)
         {
+            return RedirectToPage("/Sessions/Index");
+        }
+
+        Session = await interviews.GetAsync(sessionId.Value, ct);
+        if (Session == null)
+        {
+            ErrorMessage = $"Không tìm thấy phiên phỏng vấn với mã: {sessionId}";
             return Page();
         }
 
@@ -51,14 +55,18 @@ public class RoomModel(IInterviewSessionService interviews) : PageModel
         => await RunAsync(async () => new JsonResult(await interviews.StartAsync(sessionId, ct)));
 
     public async Task<IActionResult> OnPostSubmitAnswerAsync(
-        Guid sessionId, string? turnId, string? transcript, CancellationToken ct)
+        Guid sessionId = default, string? turnId = null, string? transcript = null, [FromBody] SubmitAnswerRequest? body = null, CancellationToken ct = default)
     {
+        var sid = body?.SessionId is not null && body.SessionId != Guid.Empty ? body.SessionId : sessionId;
+        var tid = !string.IsNullOrWhiteSpace(body?.TurnId) ? body.TurnId : turnId;
+        var text = body?.Transcript ?? transcript;
+
         // Client sinh turnId; thiếu thì server sinh hộ để lượt vẫn chống trùng được khi client retry.
-        turnId = string.IsNullOrWhiteSpace(turnId) ? Guid.NewGuid().ToString("N") : turnId.Trim();
+        tid = string.IsNullOrWhiteSpace(tid) ? Guid.NewGuid().ToString("N") : tid.Trim();
 
         return await RunAsync(async () =>
             new JsonResult(await interviews.SubmitAnswerAsync(
-                new SubmitAnswerRequest(sessionId, turnId, transcript ?? ""), ct)));
+                new SubmitAnswerRequest(sid, tid, text ?? ""), ct)));
     }
 
     public async Task<IActionResult> OnPostSkipAsync(Guid sessionId, CancellationToken ct)

@@ -14,7 +14,10 @@
         <h1 class="page-title">Dashboard</h1>
         <p class="page-lead">Voice-based oral exams: documents in, questions out, follow-ups when an answer is vague.</p>
     </div>
-    <a class="btn btn-accent" asp-page="/Documents/Index"><i class="bi bi-upload" aria-hidden="true"></i> Upload material</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-page="/Sessions/Index"><i class="bi bi-play-circle" aria-hidden="true"></i> Bắt đầu phỏng vấn</a>
+        <a class="btn btn-accent" asp-page="/Documents/Index"><i class="bi bi-upload" aria-hidden="true"></i> Upload material</a>
+    </div>
 </div>
 
 <div class="stats">
@@ -22,7 +25,7 @@
         <span class="mode">@Infra.Mode mode</span>
         <h2>An AI examiner for oral tests</h2>
         <p>Questions come from your course material. The AI asks a follow-up when an answer is still unclear.</p>
-        <a asp-page="/Interview/Room">Open the interview room <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        <a asp-page="/Sessions/Index">Open interview sessions <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
     </div>
     <div class="stat">
         <div class="stat-label">Processed documents</div>

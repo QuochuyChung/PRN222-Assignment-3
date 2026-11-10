@@ -40,17 +40,6 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
         Assert.Equal("application/json", status.Content.Headers.ContentType?.MediaType);
     }
 
-    [Theory]
-    [InlineData("/Sessions")]
-    public async Task Placeholder_Pages_Render(string url)
-    {
-        var response = await _client.GetAsync(url);
-        var html = await response.Content.ReadAsStringAsync();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Not built yet", html);
-    }
-
     [Fact]
     public async Task Questions_Page_Renders_Real_Content()
     {
@@ -59,7 +48,6 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("Question bank", html);
-        Assert.DoesNotContain("Not built yet", html);
     }
 
     [Fact]
@@ -69,6 +57,25 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.DoesNotContain("Not built yet", html);
+    }
+
+    [Fact]
+    public async Task Sessions_Page_Renders_Successfully()
+    {
+        var response = await _client.GetAsync("/Sessions");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Phiên phỏng vấn", html);
+        Assert.Contains("Kiểm tra Mic", html);
+    }
+
+    [Fact]
+    public async Task Room_Page_Redirects_To_Sessions_When_No_SessionId()
+    {
+        var nonRedirectClient = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var response = await nonRedirectClient.GetAsync("/Interview/Room");
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.StartsWith("/Sessions", response.Headers.Location?.OriginalString);
     }
 }

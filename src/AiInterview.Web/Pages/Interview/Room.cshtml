@@ -1,16 +1,260 @@
 @page
 @model AiInterview.Web.Pages.Interview.RoomModel
+@using AiInterview.Common.Enums
 @{
-    ViewData["Title"] = "Interview room";
+    ViewData["Title"] = Model.Session?.Title ?? "Phòng phỏng vấn AI";
     ViewData["Active"] = "room";
+    var s = Model.Session;
 }
-@* Token cho các POST handler của ENG-07: JS gửi header "RequestVerificationToken". *@
+
 @Html.AntiForgeryToken()
-<div class="page-head">
-    <div>
-        <h1 class="page-title">Interview room</h1>
-        <p class="page-lead">Oral interview with the AI examiner.</p>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage) || s == null)
+{
+    <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center gap-3 p-4">
+        <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+        <div>
+            <h5 class="fw-bold mb-1">Không thể tải phòng phỏng vấn</h5>
+            <div>@(Model.ErrorMessage ?? "Phiên thi không tồn tại.")</div>
+            <a asp-page="/Sessions/Index" class="btn btn-outline-danger btn-sm mt-3">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách phiên thi
+            </a>
+        </div>
     </div>
-</div>
-<partial name="_Placeholder" model="Model.Info" />
-@* Chỉ Dev D thay phần thân trang; handler của Dev C đã sẵn ở Room.cshtml.cs (ENG-07). *@
+}
+else
+{
+    <div id="interviewApp" 
+         data-session-id="@s.Id"
+         data-student-name="@s.StudentName"
+         data-question-count="@s.QuestionCount"
+         data-max-follow-ups="@s.MaxFollowUps"
+         data-answer-seconds="@s.AnswerSeconds"
+         data-session-status="@s.Status">
+
+        <!-- Header thông tin phòng thi -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 fs-4">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="fw-bold mb-0">@s.Title</h5>
+                            <span id="badgeSessionStatus" class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                @(s.Status == SessionStatus.Completed ? "Đã hoàn thành" : "Đang phỏng vấn")
+                            </span>
+                        </div>
+                        <div class="small text-secondary">
+                            Thí sinh: <strong class="text-dark">@s.StudentName</strong> &bull;
+                            Tiến độ: <span id="lblProgressQuestion" class="fw-semibold text-primary">Câu 1/@s.QuestionCount</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <button id="btnSkipQuestion" class="btn btn-outline-secondary btn-sm" title="Bỏ qua câu hiện tại để sang câu tiếp theo">
+                        <i class="bi bi-skip-forward-fill me-1"></i> Bỏ qua câu
+                    </button>
+                    <button id="btnFinishEarly" class="btn btn-outline-danger btn-sm" title="Dừng phiên thi ngay">
+                        <i class="bi bi-box-arrow-right me-1"></i> Kết thúc sớm
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <!-- Cột trái: Thẻ câu hỏi của AI & Điều khiển Voice -->
+            <div class="col-lg-7">
+                <!-- Thẻ câu hỏi chính -->
+                <div class="card border-0 shadow-sm mb-3 position-relative overflow-hidden">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span id="badgeQuestionType" class="badge rounded-pill bg-primary px-3 py-2">
+                                    <i class="bi bi-patch-question me-1"></i> Câu hỏi chính
+                                </span>
+                                <span id="badgeFollowUpCount" class="badge rounded-pill bg-warning text-dark d-none">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Hỏi xoáy lần <span id="lblFollowUpNumber">1</span>
+                                </span>
+                            </div>
+
+                            <!-- Chỉ báo trạng thái -->
+                            <div id="aiStateIndicator" class="badge rounded-pill bg-light border text-secondary px-3 py-2">
+                                <span class="spinner-grow spinner-grow-sm text-primary me-1" role="status"></span>
+                                <span id="lblAiState">Đang tải câu hỏi...</span>
+                            </div>
+                        </div>
+
+                        <!-- Nội dung câu hỏi -->
+                        <div class="bg-light bg-opacity-50 rounded-4 p-4 mb-4 border">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="ai-avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px; height:44px;">
+                                    <i class="bi bi-person-video3 fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="small text-muted fw-semibold mb-1">GIÁM KHẢO ẢO AI</div>
+                                    <h4 id="lblQuestionText" class="fw-bold text-dark lh-base mb-0">
+                                        Đang tải dữ liệu câu hỏi từ hệ thống...
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vùng tương tác âm thanh & Đồng hồ đếm ngược -->
+                        <div class="row align-items-center g-3">
+                            <!-- Circular Countdown Timer -->
+                            <div class="col-sm-5 text-center">
+                                <div class="countdown-circle-wrap position-relative d-inline-block">
+                                    <svg class="countdown-svg" width="130" height="130" viewBox="0 0 130 130">
+                                        <circle class="countdown-bg" cx="65" cy="65" r="54" stroke-width="8" />
+                                        <circle id="countdownProgress" class="countdown-progress" cx="65" cy="65" r="54" stroke-width="8" />
+                                    </svg>
+                                    <div class="countdown-text position-absolute top-50 start-50 translate-middle text-center">
+                                        <div id="lblRemainingSeconds" class="display-6 fw-bold">60</div>
+                                        <div class="small text-muted" style="font-size:0.75rem;">giây còn lại</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mic Button & Voice Wave -->
+                            <div class="col-sm-7 text-center text-sm-start">
+                                <div class="d-flex flex-column align-items-center align-items-sm-start gap-2">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <button id="btnVoiceToggle" class="btn btn-mic btn-lg rounded-circle shadow" title="Bấm để bật/tắt nhận diện giọng nói">
+                                            <i id="iconMic" class="bi bi-mic-fill fs-3"></i>
+                                            <div class="pulse-ring"></div>
+                                        </button>
+                                        <div>
+                                            <div id="lblMicStatus" class="fw-bold">Đang chuẩn bị micro...</div>
+                                            <div class="small text-secondary" id="lblMicHint">AI đọc xong câu hỏi sẽ tự bật mic.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button id="btnReplayAudio" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-volume-up-fill me-1"></i> Nghe lại câu hỏi
+                                        </button>
+                                        <button id="btnToggleTextInput" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-keyboard-fill me-1"></i> Nhập chữ dự phòng
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ô nhập chữ dự phòng (Fallback text input) -->
+                        <div id="fallbackInputContainer" class="mt-4 pt-3 border-top d-none">
+                            <label class="form-label fw-semibold small text-primary">
+                                <i class="bi bi-keyboard me-1"></i> Gõ câu trả lời của bạn (Chế độ dự phòng khi mic gặp sự cố):
+                            </label>
+                            <textarea id="txtManualAnswer" class="form-control" rows="3" placeholder="Nhập câu trả lời bằng văn bản tại đây..."></textarea>
+                            <div class="d-flex justify-content-end mt-2">
+                                <button id="btnSubmitManualAnswer" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-send-fill me-1"></i> Gửi câu trả lời này
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chế độ Demo / Kịch bản mẫu (Dành cho việc chấm bài & thuyết trình không cần mic) -->
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="small fw-bold text-secondary">
+                                    <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Thử nghiệm nhanh (Demo câu trả lời):
+                                </span>
+                                <span class="badge text-bg-light border" style="font-size:0.7rem;">Click để trả lời ngay</span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-success btn-sm btn-quick-demo" data-demo="good">
+                                    <i class="bi bi-check-lg me-1"></i> Trả lời đủ ý & sâu sắc
+                                </button>
+                                <button type="button" class="btn btn-outline-warning btn-sm btn-quick-demo" data-demo="vague">
+                                    <i class="bi bi-question-lg me-1"></i> Trả lời ngắn / mơ hồ (Kích hoạt hỏi xoáy)
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm btn-quick-demo" data-demo="dontknow">
+                                    <i class="bi bi-x-lg me-1"></i> Chưa rõ câu này / Bỏ qua
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Khung Transcript & Lịch sử đối thoại -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm h-100 d-flex flex-column">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0">
+                            <i class="bi bi-chat-left-dots text-primary me-2"></i> Lịch sử đối thoại (Transcript)
+                        </h6>
+                        <span id="transcriptCountBadge" class="badge text-bg-light border">0 lượt</span>
+                    </div>
+                    <div class="card-body p-4 flex-grow-1 overflow-auto" id="transcriptContainer" style="max-height: 480px; min-height: 320px;">
+                        <!-- Đang nói trực tiếp (Live interim transcript) -->
+                        <div id="liveTranscriptBox" class="chat-bubble user-bubble live-bubble mb-3 d-none">
+                            <div class="small fw-semibold text-primary mb-1">
+                                <i class="bi bi-mic-fill me-1"></i> Bạn đang nói...
+                            </div>
+                            <div id="lblLiveTranscriptText" class="text-dark fst-italic">Đang lắng nghe giọng nói...</div>
+                        </div>
+
+                        <div id="transcriptPlaceholder" class="text-center text-muted py-5">
+                            <i class="bi bi-chat-square-quote display-6 opacity-50"></i>
+                            <div class="mt-2 small">Nội dung câu hỏi và câu trả lời sẽ xuất hiện tại đây theo thời gian thực.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Kết Thúc Phiên Thi (UI-07) -->
+        <div class="modal fade" id="sessionCompletedModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-body text-center p-5">
+                        <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex p-4 mb-3">
+                            <i class="bi bi-trophy-fill display-4"></i>
+                        </div>
+                        <h3 class="fw-bold mb-2">Hoàn thành buổi phỏng vấn!</h3>
+                        <p class="text-secondary small mb-4">
+                            Bạn đã hoàn thành tất cả câu hỏi của buổi vấn đáp với AI giám khảo ảo. Toàn bộ lượt trao đổi đã được lưu lại hệ thống.
+                        </p>
+
+                        <div class="row g-2 text-start mb-4">
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded-3 border">
+                                    <div class="small text-muted">Thí sinh</div>
+                                    <div class="fw-bold text-truncate">@s.StudentName</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded-3 border">
+                                    <div class="small text-muted">Tổng số câu hỏi</div>
+                                    <div class="fw-bold">@s.QuestionCount câu</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2">
+                            <a asp-page="/Logs/Index" class="btn btn-primary">
+                                <i class="bi bi-journal-text me-1"></i> Xem chi tiết nhật ký phỏng vấn
+                            </a>
+                            <a asp-page="/Sessions/Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Quay về danh sách phiên thi
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/interview-tts.js" asp-append-version="true"></script>
+    <script src="~/js/interview-stt.js" asp-append-version="true"></script>
+    <script src="~/js/interview-room.js" asp-append-version="true"></script>
+}

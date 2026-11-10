@@ -88,12 +88,12 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 
 | ID | Việc | Trạng thái | PR | Cập nhật | Ghi chú |
 |---|---|---|---|---|---|
-| UI-01 | Trang khung theo template | Todo | | | Đã có trang khung ở `Web/Pages` |
-| UI-02 | Trang chọn phiên thi + test mic | Todo | | | |
-| UI-03 | Giao diện phòng phỏng vấn | Todo | | | |
-| UI-04 | TTS | Todo | | | |
-| UI-05 | STT + ô nhập chữ dự phòng | Todo | | | |
-| UI-06 | Client state machine nối endpoint | Todo | | | |
-| UI-07 | Màn hình kết thúc + xử lý lỗi | Todo | | | |
-| UI-08 | Dashboard | Todo | | | Dashboard mẫu đã có (luồng 3 lớp) |
-| UI-09 | Seed và test UI | Todo | | | |
+| UI-01 | Trang khung theo template | Review | | 2026-11-10 | Đã có layout shell, sidebar, palette |
+| UI-02 | Trang chọn phiên thi + test mic | Review | | 2026-11-10 | Tạo phiên thi, Web Audio API Canvas visualizer test mic |
+| UI-03 | Giao diện phòng phỏng vấn | Review | | 2026-11-10 | Card câu hỏi, avatar AI, đếm ngược SVG, chat bubble transcript |
+| UI-04 | TTS | Review | | 2026-11-10 | `interview-tts.js` dùng Web Speech Synthesis `vi-VN` tự động bật mic khi đọc xong |
+| UI-05 | STT + ô nhập chữ dự phòng | Review | | 2026-11-10 | `interview-stt.js` nhận diện live, silence detection, ô textarea dự phòng |
+| UI-06 | Client state machine nối endpoint | Review | | 2026-11-10 | `interview-room.js` state machine, F5 reload sync, UUID turnId chống trùng |
+| UI-07 | Màn hình kết thúc + xử lý lỗi | Review | | 2026-11-10 | Modal chúc mừng, tổng kết kết quả, xử lý timeout/error |
+| UI-08 | Dashboard | Review | | 2026-11-10 | Hero card, KPI, liên kết nhanh phòng phỏng vấn |
+| UI-09 | Seed và test UI | Review | | 2026-11-10 | `sample-transcripts.json`, nút demo nhanh 3 kịch bản, unit tests xUnit |

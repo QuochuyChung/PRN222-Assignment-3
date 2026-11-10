@@ -60,6 +60,10 @@ public sealed record FollowUpDecision(
 /// <summary>Vòng đời phiên thi và state machine. Dev C (ENG-02, ENG-03, ENG-05..07, ENG-09).</summary>
 public interface IInterviewSessionService
 {
+    Task<IReadOnlyList<SessionDto>> ListAsync(SessionStatus? status = null, CancellationToken ct = default);
+
+    Task<SessionDto?> GetAsync(Guid id, CancellationToken ct = default);
+
     Task<SessionDto> CreateAsync(CreateSessionRequest request, CancellationToken ct = default);
 
     Task<InterviewStateView> StartAsync(Guid sessionId, CancellationToken ct = default);
