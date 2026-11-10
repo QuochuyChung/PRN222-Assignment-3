@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AiInterview.Core/AiInterview.Core.csproj" />
+    <Project Path="src/AiInterview.Infrastructure/AiInterview.Infrastructure.csproj" />
+    <Project Path="src/AiInterview.Web/AiInterview.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AiInterview.Tests/AiInterview.Tests.csproj" />
+  </Folder>
+</Solution>

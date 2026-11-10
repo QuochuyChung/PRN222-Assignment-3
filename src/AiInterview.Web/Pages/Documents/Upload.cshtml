@@ -1,0 +1,144 @@
+@page
+@model AiInterview.Web.Pages.Documents.UploadModel
+@{
+    ViewData["Title"] = "Tải lên Tài liệu Mới";
+}
+
+<div class="container py-4" style="max-width: 800px;">
+    <div class="mb-4">
+        <a asp-page="/Documents/Index" class="text-decoration-none text-secondary d-inline-flex align-items-center gap-1 mb-2">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách tài liệu
+        </a>
+        <h1 class="h3 fw-bold mb-1">
+            <i class="bi bi-cloud-arrow-up text-primary me-2"></i>Tải lên Tài liệu Môn học
+        </h1>
+        <p class="text-muted">
+            Tài liệu tải lên sẽ được chuyển vào pipeline tự động: Lưu trữ &rarr; Lưu Mongo &rarr; Enqueue stream &rarr; Trích xuất Text &rarr; Chunking &rarr; Gemini Embedding &rarr; Qdrant Vector Store.
+        </p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>@Model.ErrorMessage</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                <!-- Dropzone Area -->
+                <div class="border border-2 border-dashed rounded-3 p-5 text-center bg-light cursor-pointer mb-4" id="dropZone" style="border-color: #cbd5e1 !important; transition: all 0.2s;">
+                    <i class="bi bi-file-earmark-arrow-up display-3 text-primary mb-3"></i>
+                    <h5 class="fw-bold mb-2">Kéo thả file vào đây hoặc nhấn để chọn file</h5>
+                    <p class="text-secondary small mb-3">
+                        Hỗ trợ định dạng <strong>.PDF</strong>, <strong>.PPTX</strong> (PowerPoint), <strong>.DOCX</strong> (Word). Tối đa 50MB.
+                    </p>
+                    <input type="file" asp-for="UploadFile" class="d-none" id="fileInput" accept=".pdf,.docx,.pptx" />
+                    <button type="button" class="btn btn-outline-primary px-4" onclick="document.getElementById('fileInput').click();">
+                        <i class="bi bi-folder2 me-1"></i> Chọn file từ máy tính
+                    </button>
+                </div>
+
+                <!-- Selected File Preview -->
+                <div id="filePreview" class="d-none alert alert-light border d-flex align-items-center justify-content-between mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark-check fs-2 text-success me-3" id="fileIcon"></i>
+                        <div>
+                            <div class="fw-bold" id="selectedFileName">filename.ext</div>
+                            <small class="text-secondary" id="selectedFileSize">0 KB</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelectedFile()">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Info Callout -->
+                <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-info-circle-fill fs-5 text-info"></i>
+                    <div>
+                        <strong>Lưu ý:</strong> File PDF scan dạng hình ảnh không có lớp text sẽ bị từ chối và đánh dấu trạng thái <code>Failed</code> để bảo đảm chất lượng câu hỏi phỏng vấn.
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-page="/Documents/Index" class="btn btn-light px-4">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4 d-flex align-items-center gap-2" id="submitBtn" disabled>
+                        <i class="bi bi-upload"></i>
+                        <span id="submitBtnText">Bắt đầu Ingestion</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("fileInput");
+        const filePreview = document.getElementById("filePreview");
+        const selectedFileName = document.getElementById("selectedFileName");
+        const selectedFileSize = document.getElementById("selectedFileSize");
+        const submitBtn = document.getElementById("submitBtn");
+        const submitBtnText = document.getElementById("submitBtnText");
+        const uploadForm = document.getElementById("uploadForm");
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('bg-primary-subtle');
+                dropZone.style.borderColor = '#0d6efd';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('bg-primary-subtle');
+                dropZone.style.borderColor = '#cbd5e1';
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (fileInput.files.length > 0) {
+                handleFileSelect(fileInput.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFileName.textContent = file.name;
+            const sizeKb = file.size / 1024;
+            selectedFileSize.textContent = sizeKb > 1024 ? (sizeKb / 1024).toFixed(2) + " MB" : sizeKb.toFixed(1) + " KB";
+            filePreview.classList.remove("d-none");
+            submitBtn.disabled = false;
+        }
+
+        function clearSelectedFile() {
+            fileInput.value = "";
+            filePreview.classList.add("d-none");
+            submitBtn.disabled = true;
+        }
+
+        uploadForm.addEventListener('submit', () => {
+            submitBtn.disabled = true;
+            submitBtnText.textContent = "Đang tải lên...";
+        });
+    </script>
+}
+

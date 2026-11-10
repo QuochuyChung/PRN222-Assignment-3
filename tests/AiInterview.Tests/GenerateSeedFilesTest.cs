@@ -1,0 +1,53 @@
+using System.IO;
+using AiInterview.Tests.Helpers;
+using Xunit;
+
+namespace AiInterview.Tests;
+
+public class GenerateSeedFilesTest
+{
+    [Fact]
+    public void GenerateSeedFiles_ShouldCreateAllSampleFilesUnderSeedFolder()
+    {
+        string baseDir = Directory.GetCurrentDirectory();
+        // Traverse up to find repo root
+        var dirInfo = new DirectoryInfo(baseDir);
+        while (dirInfo != null && !File.Exists(Path.Combine(dirInfo.FullName, "tasks.md")))
+        {
+            dirInfo = dirInfo.Parent;
+        }
+
+        string repoRoot = dirInfo != null ? dirInfo.FullName : baseDir;
+        string seedDir = Path.Combine(repoRoot, "seed");
+        Directory.CreateDirectory(seedDir);
+
+        // 1. Sample DOCX
+        byte[] docx = SampleFileGenerator.CreateSampleDocx(
+            "Giao trinh PRN222 - Lap trinh .NET nang cao",
+            "Mon hoc PRN222 bao gom cac kien thuc ve ASP.NET Core Razor Pages, Entity Framework Core, Dependency Injection, kien truc microservices va RAG voi Vector Database Qdrant. Sinh vien can nam ro cach hoat dong cua PageModel, luong request-response va xu ly du lieu da luong.");
+        File.WriteAllBytes(Path.Combine(seedDir, "sample.docx"), docx);
+
+        // 2. Sample PPTX
+        byte[] pptx = SampleFileGenerator.CreateSamplePptx(
+            "Slide 1: Tong quan AI Interview",
+            "He thong phong van ao AI ung dung LLM va RAG de tu dong hoa quy trinh danh gia ky nang sinh vien qua giong noi.",
+            "Slide 2: Pipeline Ingestion tai lieu",
+            "Tai lieu duoc trich xuat text bang OpenXml va PdfPig, phan doan chunking ngu nghia, sinh embedding bang Gemini va luu tru vao Qdrant.");
+        File.WriteAllBytes(Path.Combine(seedDir, "sample.pptx"), pptx);
+
+        // 3. Sample PDF
+        byte[] pdf = SampleFileGenerator.CreateSamplePdfWithText(
+            "Huong dan thuc hanh PRN222: Cai dat va van hanh he thong phong van AI voi Kubernetes va Qdrant.");
+        File.WriteAllBytes(Path.Combine(seedDir, "sample.pdf"), pdf);
+
+        // 4. Scanned PDF (error test)
+        byte[] scannedPdf = SampleFileGenerator.CreateScannedPdfWithoutText();
+        File.WriteAllBytes(Path.Combine(seedDir, "scanned_error.pdf"), scannedPdf);
+
+        Assert.True(File.Exists(Path.Combine(seedDir, "sample.docx")));
+        Assert.True(File.Exists(Path.Combine(seedDir, "sample.pptx")));
+        Assert.True(File.Exists(Path.Combine(seedDir, "sample.pdf")));
+        Assert.True(File.Exists(Path.Combine(seedDir, "scanned_error.pdf")));
+    }
+}
+
