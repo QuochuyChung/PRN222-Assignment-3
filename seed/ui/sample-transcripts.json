@@ -1,0 +1,35 @@
+{
+  "scenarios": [
+    {
+      "name": "TraLoiXuatSac",
+      "description": "Câu trả lời đầy đủ ý chính, phân tích sâu, không bị hỏi xoáy",
+      "question": "Razor Pages khác MVC ở điểm nào?",
+      "transcript": "Razor Pages được thiết kế theo hướng page-focused, mỗi trang có một file PageModel đi kèm để xử lý logic và routing trực tiếp theo cấu trúc thư mục. Trong khi đó MVC phân tách độc lập Model, View và Controller qua routing bảng. Với các ứng dụng web vừa và nhỏ hoặc các tính năng độc lập, Razor Pages giúp code gọn gàng, dễ bảo trì hơn so với MVC.",
+      "expectedResult": {
+        "needFollowUp": false,
+        "reason": "Câu trả lời rất rõ ràng, nêu đủ điểm khác biệt về kiến trúc, routing và ngữ cảnh ứng dụng."
+      }
+    },
+    {
+      "name": "TraLoiNganMoHo",
+      "description": "Câu trả lời quá ngắn hoặc thiếu ý, kích hoạt AI hỏi xoáy",
+      "question": "Razor Pages khác MVC ở điểm nào?",
+      "transcript": "Razor Pages thì mỗi trang có một PageModel còn MVC thì dùng Controller ạ.",
+      "expectedResult": {
+        "needFollowUp": true,
+        "followUpQuestion": "Ý bạn vừa trả lời khá ngắn gọn. Bạn có thể giải thích rõ hơn về ưu điểm của Razor Pages so với MVC khi xây dựng ứng dụng không?",
+        "reason": "Chưa làm rõ được cách tổ chức routing và tình huống chọn Razor Pages."
+      }
+    },
+    {
+      "name": "ChuaBietTraLoi",
+      "description": "Thí sinh chưa nắm rõ hoặc yêu cầu bỏ qua câu hỏi",
+      "question": "So sánh Scoped và Singleton trong ASP.NET Core.",
+      "transcript": "Dạ em chưa kịp ôn kỹ phần vòng đời dịch vụ này, em xin phép bỏ qua để sang câu hỏi tiếp theo ạ.",
+      "expectedResult": {
+        "needFollowUp": false,
+        "reason": "Thí sinh xin bỏ qua câu hỏi."
+      }
+    }
+  ]
+}

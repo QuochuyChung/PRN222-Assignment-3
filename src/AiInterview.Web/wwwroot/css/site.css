@@ -201,3 +201,104 @@ code { color: var(--ink-2); background: var(--surface-2); border: 1px solid var(
 .live-note .dot { width: .45rem; height: .45rem; border-radius: 50%; background: var(--line-2); }
 .live-note[data-state="live"] .dot { background: var(--ok); }
 .live-note[data-state="poll"] .dot { background: var(--warn); }
+
+/* Dev D — Interview UI Custom Styles */
+.avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+}
+
+/* Circular Countdown Timer */
+.countdown-circle-wrap {
+  width: 130px;
+  height: 130px;
+}
+.countdown-svg {
+  transform: rotate(-90deg);
+}
+.countdown-bg {
+  fill: none;
+  stroke: var(--line, #e2e8f0);
+}
+.countdown-progress {
+  fill: none;
+  stroke: #10b981;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s linear, stroke 0.4s ease;
+}
+
+/* Mic button & pulsing animation */
+.btn-mic {
+  width: 68px;
+  height: 68px;
+  background: var(--accent, #0f2a43);
+  color: #fff;
+  position: relative;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+.btn-mic:hover {
+  background: var(--accent-strong, #17406a);
+  color: #fff;
+  transform: scale(1.05);
+}
+.btn-mic.recording {
+  background: #ef4444 !important;
+  color: #fff;
+}
+.pulse-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  pointer-events: none;
+}
+.btn-mic.recording .pulse-ring {
+  animation: pulse-ring-animation 1.5s infinite;
+}
+@keyframes pulse-ring-animation {
+  0% { transform: scale(1); border-color: rgba(239, 68, 68, 0.8); opacity: 1; }
+  100% { transform: scale(1.6); border-color: rgba(239, 68, 68, 0); opacity: 0; }
+}
+
+/* Chat & Transcript Bubbles */
+.chat-bubble {
+  border-radius: 1rem;
+  padding: .85rem 1.15rem;
+  font-size: .92rem;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.ai-bubble {
+  background: var(--surface-2, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+  border-top-left-radius: .25rem;
+}
+.user-bubble {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-top-right-radius: .25rem;
+}
+.live-bubble {
+  background: #fefce8;
+  border: 1px dashed #facc15;
+  animation: fade-pulse 2s infinite ease-in-out;
+}
+.feedback-bubble {
+  border-radius: .75rem;
+}
+@keyframes fade-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
