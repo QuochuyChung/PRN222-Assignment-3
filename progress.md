@@ -58,14 +58,14 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 
 | ID | Việc | Trạng thái | PR | Cập nhật | Ghi chú |
 |---|---|---|---|---|---|
-| QST-01 | `IRetrievalService` | Todo | | | |
-| QST-02 | `IQuestionGeneratorService` + `ILlmRepository` (Gemini) | Todo | | | |
-| QST-03 | Mở rộng `IQuestionRepository` + `IQuestionService` | Todo | | | Repository SQL cơ bản đã có |
-| QST-04 | Trang sinh câu hỏi | Todo | | | |
-| QST-05 | Trang duyệt câu hỏi | Todo | | | |
-| QST-06 | Seed và test câu hỏi | Todo | | | |
-| LOG-01 | TurnLogWorker (`turns-stream` → SQL) | Todo | | | `ITurnRepository.InsertIfNotExistsAsync` đã có |
-| LOG-02 | Trang xem log phiên thi | Todo | | | |
+| QST-01 | `IRetrievalService` | Review | | 2026-11-10 | Embed truy vấn, tìm vector, lọc documentId theo hợp đồng đã chốt |
+| QST-02 | `IQuestionGeneratorService` + `ILlmRepository` (Gemini) | Review | | 2026-11-10 | Fake/Real LLM, parse JSON và kiểm tra sourceChunkIds |
+| QST-03 | Mở rộng `IQuestionRepository` + `IQuestionService` | Review | | 2026-11-10 | Dùng CRUD SQL sẵn có, service xử lý Draft/Approved/Rejected |
+| QST-04 | Trang sinh câu hỏi | Review | | 2026-11-10 | Chọn tài liệu Success, số lượng và mức Bloom |
+| QST-05 | Trang duyệt câu hỏi | Review | | 2026-11-10 | Sửa, duyệt, loại bỏ bản nháp |
+| QST-06 | Seed và test câu hỏi | Review | | 2026-11-10 | Corpus Fake đã index; test retrieval, parse JSON, duyệt và Gemini; build xanh, testhost bị Application Control chặn |
+| LOG-01 | TurnLogWorker (`turns-stream` → SQL) | Review | | 2026-11-10 | Retry/dead-letter, ghi idempotent qua ITurnRepository sẵn có; build xanh, testhost bị Application Control chặn |
+| LOG-02 | Trang xem log phiên thi | Review | | 2026-11-10 | Lọc sessionId, xem lượt hỏi, transcript, nguồn, thời gian |
 
 ## Dev C — Interview Engine
 
