@@ -1,0 +1,50 @@
+# Giá trị mặc định. Ghi đè bằng --set hoặc file values riêng (ví dụ values-prod.yaml).
+# KHÔNG đặt bí mật ở đây: mọi biến cấu hình (kể cả bí mật) nằm trong Vault, ESO tạo Secret tự động.
+
+nameOverride: ""
+
+image:
+  repository: harbor.huydevops.id.vn/ai-interview/app
+  tag: "latest"            # Jenkins sẽ sửa dòng này khi build image mới
+  pullPolicy: IfNotPresent
+
+# Harbor project riêng tư cần Secret kiểu docker-registry, ví dụ:  imagePullSecrets: [{ name: harbor-pull }]
+imagePullSecrets: []
+
+aspnetcoreEnvironment: Production
+
+# Hai Deployment dùng chung một image, khác nhau biến ROLE (web | worker).
+web:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+worker:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+service:
+  port: 80                 # Service chỉ trỏ vào web (cổng 8080 trong container)
+
+ingress:
+  enabled: true
+  className: nginx
+  host: ai-interview.huydevops.id.vn   # đổi sang tên miền thật khi có
+  annotations:
+    # Upload tối đa 50 MB (Ingestion:MaxFileSizeMb), mặc định của ingress-nginx chỉ 1 MB.
+    nginx.ingress.kubernetes.io/proxy-body-size: "60m"
+    # SignalR (WebSocket) cần giữ kết nối lâu.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+# External Secrets Operator lấy toàn bộ key trong Vault thành biến môi trường của pod.
+externalSecret:
+  enabled: true
+  apiVersion: external-secrets.io/v1beta1   # đổi sang external-secrets.io/v1 nếu ESO của bạn là bản mới
+  storeName: vault                           # tên ClusterSecretStore
+  remoteKey: ai-interview/production         # đường dẫn trong kv/ (KHÔNG có "kv/" và KHÔNG có "data/")
+  secretName: ai-interview-secrets
+  refreshInterval: 1h

@@ -27,4 +27,5 @@ public static class RedisKeys
 public static class HttpClientNames
 {
     public const string Gemini = "gemini";
+    public const string Ollama = "ollama";
 }

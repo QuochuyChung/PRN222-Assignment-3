@@ -20,6 +20,8 @@ public static class DataServiceCollectionExtensions
         services.Configure<QdrantOptions>(configuration.GetSection(QdrantOptions.SectionName));
         services.Configure<MinioOptions>(configuration.GetSection(MinioOptions.SectionName));
         services.Configure<GeminiOptions>(configuration.GetSection(GeminiOptions.SectionName));
+        services.Configure<EmbeddingOptions>(configuration.GetSection(EmbeddingOptions.SectionName));
+        services.Configure<OllamaOptions>(configuration.GetSection(OllamaOptions.SectionName));
         services.Configure<InterviewOptions>(configuration.GetSection(InterviewOptions.SectionName));
 
         services.AddSqlDatabase(configuration, infra);

@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.git/
+.vs/
+.vscode/
+.idea/
+image/
+helm/
+
+# File cấu hình thật ở gốc repo chứa bí mật: KHÔNG được đưa vào image
+/appsettings.json
+/appsettings.*.json
+**/appsettings.*.local.json
+*.db
+*.md

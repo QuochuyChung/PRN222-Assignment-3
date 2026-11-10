@@ -9,6 +9,7 @@ public static class ServiceNames
     public const string Redis = "Redis";
     public const string MinIO = "MinIO";
     public const string Gemini = "Gemini";
+    public const string Ollama = "Ollama";
     public const string SignalR = "SignalR";
 
     /// <summary>Logic nội bộ của ứng dụng (không gọi hạ tầng ngoài).</summary>

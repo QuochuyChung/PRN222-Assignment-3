@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ai-interview
+description: AI Interview (vấn đáp bằng giọng nói) - hai Deployment web và worker dùng chung một image
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

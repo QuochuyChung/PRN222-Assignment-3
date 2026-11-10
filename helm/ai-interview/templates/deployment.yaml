@@ -1,0 +1,79 @@
+{{- /*
+  Hai Deployment từ cùng một image và cùng một chart:
+    - web:    ROLE=web     (Razor Pages + SignalR, nhận traffic từ Ingress)
+    - worker: ROLE=worker  (xử lý tài liệu và ghi log lượt thi, không nhận traffic)
+  Mọi biến cấu hình khác (Infra__Mode, chuỗi kết nối, Qdrant, MinIO, Ollama, Gemini...) đến từ Secret do ESO tạo từ Vault.
+  ROLE đặt riêng từng Deployment nên KHÔNG để trong Vault.
+*/ -}}
+{{- range $role := list "web" "worker" }}
+{{- $cfg := index $.Values $role }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ai-interview.fullname" $ }}-{{ $role }}
+  labels:
+    {{- include "ai-interview.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $role }}
+spec:
+  replicas: {{ $cfg.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "ai-interview.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $role }}
+  template:
+    metadata:
+      labels:
+        {{- include "ai-interview.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $role }}
+    spec:
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+      containers:
+        - name: {{ $role }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ROLE
+              value: {{ $role | quote }}
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+            - name: ASPNETCORE_ENVIRONMENT
+              value: {{ $.Values.aspnetcoreEnvironment | quote }}
+          {{- if $.Values.externalSecret.enabled }}
+          envFrom:
+            - secretRef:
+                name: {{ $.Values.externalSecret.secretName }}
+          {{- end }}
+          resources:
+            {{- toYaml $cfg.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 10
+---
+{{- end }}

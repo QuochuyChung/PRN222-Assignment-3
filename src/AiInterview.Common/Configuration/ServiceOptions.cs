@@ -63,8 +63,35 @@ public sealed class GeminiOptions
     /// <summary>Model embedding (khác model sinh văn bản).</summary>
     public string EmbeddingModel { get; set; } = "";
 
-    /// <summary>Số chiều vector, phải khớp với collection trong Qdrant.</summary>
+    /// <summary>
+    /// Số chiều vector, phải khớp với collection trong Qdrant. Dùng chung cho mọi provider embedding
+    /// (Gemini, Ollama): Ollama không đổi được số chiều, nên giá trị này phải bằng số chiều của model (nomic-embed-text = 768).
+    /// </summary>
     public int EmbeddingDimensions { get; set; } = 768;
+}
+
+/// <summary>Chọn nơi tạo embedding. Sinh văn bản (câu hỏi, hỏi xoáy) vẫn dùng Gemini.</summary>
+public sealed class EmbeddingOptions
+{
+    public const string SectionName = "Embedding";
+
+    /// <summary><c>Ollama</c> (mặc định) hoặc <c>Gemini</c>.</summary>
+    public string Provider { get; set; } = "Ollama";
+
+    public bool IsGemini => string.Equals(Provider, "Gemini", StringComparison.OrdinalIgnoreCase);
+}
+
+public sealed class OllamaOptions
+{
+    public const string SectionName = "Ollama";
+
+    /// <summary>Địa chỉ Ollama, ví dụ <c>http://192.168.58.24:11434/</c>.</summary>
+    public string BaseUrl { get; set; } = "http://localhost:11434/";
+
+    /// <summary>Model embedding đã <c>ollama pull</c> sẵn.</summary>
+    public string EmbeddingModel { get; set; } = "nomic-embed-text";
+
+    public int TimeoutSeconds { get; set; } = 120;
 }
 
 public sealed class InterviewOptions

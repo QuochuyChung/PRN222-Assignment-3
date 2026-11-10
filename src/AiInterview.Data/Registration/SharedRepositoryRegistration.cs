@@ -3,6 +3,7 @@ using AiInterview.Data.Repositories.Ai;
 using AiInterview.Data.Repositories.Queue;
 using AiInterview.Data.Repositories.Vectors;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace AiInterview.Data.Registration;
 
@@ -24,7 +25,13 @@ internal static class SharedRepositoryRegistration
         else
         {
             services.AddSingleton<IVectorRepository, QdrantVectorRepository>();
-            services.AddSingleton<IEmbeddingRepository, GeminiEmbeddingRepository>();
+            // Embedding: chọn bằng Embedding:Provider (Ollama mặc định, hoặc Gemini). Sinh văn bản vẫn dùng Gemini.
+            services.AddSingleton<GeminiEmbeddingRepository>();
+            services.AddSingleton<OllamaEmbeddingRepository>();
+            services.AddSingleton<IEmbeddingRepository>(sp =>
+                sp.GetRequiredService<IOptions<EmbeddingOptions>>().Value.IsGemini
+                    ? sp.GetRequiredService<GeminiEmbeddingRepository>()
+                    : sp.GetRequiredService<OllamaEmbeddingRepository>());
             services.AddSingleton<IMessageQueueRepository, RedisMessageQueueRepository>();
             // ILlmRepository do module Questions đăng ký (QuestionRepositoryRegistration) — QST-02.
         }

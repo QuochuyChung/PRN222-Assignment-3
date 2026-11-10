@@ -55,6 +55,13 @@ internal static class SharedClientsRegistration
             }
         });
 
+        services.AddHttpClient(HttpClientNames.Ollama, (sp, client) =>
+        {
+            var o = sp.GetRequiredService<IOptions<OllamaOptions>>().Value;
+            client.BaseAddress = new Uri(o.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(Math.Max(5, o.TimeoutSeconds));
+        });
+
         return services;
     }
 }

@@ -32,3 +32,6 @@ Thumbs.db
 
 # Giữ lại tool manifest (dotnet-ef) cho cả nhóm
 !.config/dotnet-tools.json
+
+# File cấu hình thật ở gốc repo (chứa bí mật), không commit. Bản mẫu là appsettings.Real.example.json
+/appsettings.json
