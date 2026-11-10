@@ -79,7 +79,7 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 | ENG-06 | Chống trùng theo `turnId` | Review | | 2026-11-10 | `SubmitAnswerAsync` gọi `TryLockAsync(sessionId, turnId)` trước mọi việc khác; request trùng trả lại state hiện tại (không gọi LLM, không publish). TTL khóa 5 phút, khóa theo phiên nên `turnId` giống nhau ở 2 phiên vẫn chạy độc lập |
 | ENG-07 | Endpoint phiên thi | Todo | | | |
 | ENG-08 | `ITurnPublisher` | Review | | 2026-11-10 | `TurnPublisher` gọi `EnsureGroupAsync` + `PublishAsync(turns-stream, turn.ToFields())`; test round-trip `ToFields` → `FromFields` và lỗi hàng đợi được log rồi ném lại |
-| ENG-09 | Khôi phục khi F5 | Todo | | | |
+| ENG-09 | Khôi phục khi F5 | Review | | 2026-11-10 | `GetStateAsync` trả đúng câu hiện tại (kể cả câu xoáy do LLM sinh, lưu ở `SessionState.CurrentQuestionText`), `followUpCount`, `RemainingSeconds` từ deadline tuyệt đối. Gọi `state` nhiều lần không gia hạn deadline, không tiêu lượt xoáy, không publish. Sửa lỗi: state `Finished` không còn bị ghi lại vào Redis sau `FinishAsync` |
 | ENG-10 | Seed và test engine | Todo | | | |
 
 ## Dev D — Interview UI

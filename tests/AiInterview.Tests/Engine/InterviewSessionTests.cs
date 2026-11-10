@@ -78,8 +78,9 @@ public class InterviewSessionTests
         using var kit = new EngineTestKit();
         await kit.SeedApprovedAsync(6);
 
-        // Thí sinh 1 thi hết 3 câu để các lượt được ghi vào SQL (nguồn phát hiện câu đã dùng).
+        // Thí sinh 1 thi hết 3 câu để các câu được đánh dấu đã dùng.
         var first = await kit.RunAsync(s => s.CreateAsync(new CreateSessionRequest("S1", "Thí sinh 1", QuestionCount: 3)));
+        var firstIds = (await kit.States.GetAsync(first.Id.ToString()))!.QuestionIds.ToList();
         await kit.RunAsync(s => s.StartAsync(first.Id));
         for (var i = 0; i < 3; i++)
         {
@@ -89,9 +90,6 @@ public class InterviewSessionTests
 
         // Thí sinh 2 thi ngay sau đó: phải nhận tập câu khác.
         var second = await kit.RunAsync(s => s.CreateAsync(new CreateSessionRequest("S2", "Thí sinh 2", QuestionCount: 3)));
-        await kit.RunAsync(s => s.StartAsync(second.Id));
-
-        var firstIds = (await kit.States.GetAsync(first.Id.ToString()))!.QuestionIds;
         var secondIds = (await kit.States.GetAsync(second.Id.ToString()))!.QuestionIds;
 
         Assert.Equal(3, secondIds.Distinct().Count());

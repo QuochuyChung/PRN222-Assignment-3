@@ -389,10 +389,13 @@ internal sealed class InterviewSessionService(
                 break;
 
             case InterviewState.Finished:
+                // Kết thúc: đánh dấu phiên trong SQL rồi xóa state Redis.
+                // KHÔNG lưu lại state sau đó (nếu lưu, phiên đã xong sẽ "sống lại" trong Redis).
                 await FinishAsync(session.Id, ct);
                 state.State = InterviewState.Finished;
                 state.Deadline = null;
-                break;
+                state.SilencePrompts = 0;
+                return ToView(session, state);
         }
 
         await states.SaveAsync(session.Id.ToString(), state, ct);
@@ -408,6 +411,7 @@ internal sealed class InterviewSessionService(
             await FinishAsync(session.Id, ct);
             state.State = InterviewState.Finished;
             state.Deadline = null;
+            state.SilencePrompts = 0;
             return;
         }
 
