@@ -73,7 +73,7 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 |---|---|---|---|---|---|
 | ENG-01 | `ISessionStateRepository` (In-memory + Redis) | Review | | 2026-11-10 | `InMemorySessionStateRepository` (TTL 2h gia hạn theo hoạt động, clone khi đọc/ghi) + `RedisSessionStateRepository` (Hash `interview:{id}`, `SET NX EX` cho `lock:{sessionId}:{turnId}`); test ở `tests/AiInterview.Tests/Engine/` |
 | ENG-02 | Dịch vụ phiên thi | Todo | | | |
-| ENG-03 | State machine | Todo | | | |
+| ENG-03 | State machine | Review | | 2026-11-10 | `InterviewStateMachine` (internal static): bảng cạnh `AskQuestion → Listening → Evaluating → FollowUp \| NextQuestion \| Finished`, `Finished` là trạng thái cuối; test kiểm **mọi cặp 6×6** trạng thái |
 | ENG-04 | `IFollowUpDecider` | Todo | | | |
 | ENG-05 | Luật cứng phía server | Todo | | | |
 | ENG-06 | Chống trùng theo `turnId` | Todo | | | |
