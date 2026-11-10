@@ -8,9 +8,9 @@ namespace AiInterview.Web.Pages.Interview;
 public class RoomModel : PageModel
 {
     public PlaceholderInfo Info { get; } = new(
-        "Dev D (giao diện) + Dev C (endpoint)",
+        "Dev D (UI) + Dev C (endpoints)",
         "UI-03..UI-07, ENG-07",
-        "AI đọc câu hỏi, sinh viên trả lời bằng giọng nói, AI hỏi xoáy theo giới hạn thời gian và số lượt.");
+        "The AI reads the question aloud, the student answers by voice, and the AI asks follow-ups within the time and turn limits.");
 
     public void OnGet()
     {

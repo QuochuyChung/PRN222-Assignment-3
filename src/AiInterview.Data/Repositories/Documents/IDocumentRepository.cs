@@ -4,7 +4,7 @@ using AiInterview.Data.Models;
 
 namespace AiInterview.Data.Repositories.Documents;
 
-/// <summary>Metadata tài liệu. Real = MongoDB (Dev A, ING-02). Fake = in-memory.</summary>
+/// <summary>Document metadata. Real = MongoDB (Dev A, ING-02). Fake = in-memory.</summary>
 public interface IDocumentRepository
 {
     Task CreateAsync(DocumentRecord document, CancellationToken ct = default);

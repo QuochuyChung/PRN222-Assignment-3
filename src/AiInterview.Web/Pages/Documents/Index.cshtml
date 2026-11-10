@@ -1,9 +1,128 @@
 @page
 @model AiInterview.Web.Pages.Documents.IndexModel
+@using AiInterview.Common.Enums
 @{
-    ViewData["Title"] = "Tài liệu";
+    ViewData["Title"] = "Documents";
     ViewData["Active"] = "documents";
+
+    static string Size(long bytes) => bytes switch
+    {
+        >= 1024 * 1024 => $"{bytes / 1024d / 1024d:0.0} MB",
+        >= 1024 => $"{bytes / 1024d:0} KB",
+        _ => $"{bytes} B"
+    };
+    static string Ext(string name) => System.IO.Path.GetExtension(name).TrimStart('.').ToLowerInvariant();
 }
-<h2 class="fw-bold mb-1">Tài liệu</h2>
-<div class="small text-secondary mb-3">Tài liệu môn học dùng để sinh câu hỏi vấn đáp.</div>
-<partial name="_Placeholder" model="Model.Info" />
+
+<div class="page-head">
+    <div>
+        <p class="eyebrow">Course material</p>
+        <h1 class="page-title">Documents</h1>
+        <p class="page-lead">Upload slides, handouts and readings. Each file is split into chunks and embedded so questions can be generated from it.</p>
+    </div>
+</div>
+
+@if (Model.Notice is not null)
+{
+    <div class="notice notice-ok" role="status"><i class="bi bi-check2-circle" aria-hidden="true"></i><span>@Model.Notice</span></div>
+}
+@if (Model.Problem is not null)
+{
+    <div class="notice notice-err" role="alert"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>@Model.Problem</span></div>
+}
+
+<div class="doc-layout">
+    <section class="panel upload-panel" aria-labelledby="uploadTitle">
+        <h2 class="panel-title" id="uploadTitle">Upload a file</h2>
+        <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" id="uploadForm" data-max-mb="@Model.MaxFileSizeMb">
+            <label class="dropzone" for="fileInput" id="dropzone">
+                <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+                <span class="dz-main" id="dzLabel">Drop a file here or <u>browse</u></span>
+                <span class="dz-hint">PDF, DOCX or PPTX, up to @Model.MaxFileSizeMb MB</span>
+                <input id="fileInput" name="file" type="file" class="visually-hidden" required
+                       accept=".pdf,.docx,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+            </label>
+            <p class="field-error" id="fileError" role="alert" hidden></p>
+            <button type="submit" class="btn btn-ink w-100 mt-3" id="uploadBtn">
+                <span class="label">Upload and process</span>
+            </button>
+        </form>
+        <ol class="pipeline" aria-label="What happens after upload">
+            <li>Stored in object storage</li>
+            <li>Text extracted per page, slide or heading</li>
+            <li>Chunked, embedded and indexed</li>
+        </ol>
+    </section>
+
+    <section class="panel list-panel" aria-labelledby="listTitle">
+        <div class="panel-head">
+            <h2 class="panel-title" id="listTitle">Library</h2>
+            <dl class="tally" id="tally">
+                <div><dt>Total</dt><dd data-count="all">@Model.Documents.Count</dd></div>
+                <div><dt>Ready</dt><dd data-count="Success">@Model.CountOf(DocumentStatus.Success)</dd></div>
+                <div><dt>Processing</dt><dd data-count="Processing">@Model.CountOf(DocumentStatus.Processing)</dd></div>
+                <div><dt>Failed</dt><dd data-count="Failed">@Model.CountOf(DocumentStatus.Failed)</dd></div>
+            </dl>
+        </div>
+
+        @if (Model.Documents.Count == 0)
+        {
+            <div class="empty">
+                <i class="bi bi-folder2-open" aria-hidden="true"></i>
+                <p>No documents yet. Upload the first one to start building the question bank.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap"><table class="table-stack" id="docTable">
+                <thead>
+                    <tr><th scope="col">File</th><th scope="col">Status</th><th scope="col">Pages · chunks</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                @foreach (var d in Model.Documents)
+                {
+                    var status = d.Status.ToString();
+                    <tr data-id="@d.Id" data-status="@status">
+                        <td data-label="File">
+                            <div class="file-cell">
+                                <span class="file-badge file-@Ext(d.FileName)" aria-hidden="true">@Ext(d.FileName)</span>
+                                <div class="min-w-0">
+                                    <div class="file-name" title="@d.FileName">@d.FileName</div>
+                                    <div class="file-meta">@Size(d.Size) · <time datetime="@d.UploadedAt.ToString("O")">@d.UploadedAt.ToString("yyyy-MM-dd HH:mm") UTC</time></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Status" class="status-col">
+                            <div>
+                            <span class="status status-@status.ToLowerInvariant()" data-field="status">@status</span>
+                            <div class="progress-line" data-field="progress" @(d.Status == DocumentStatus.Processing ? "" : "hidden")>
+                                <div class="bar"><span style="width:5%"></span></div>
+                                <span class="step">Waiting for worker</span>
+                            </div>
+                            <p class="error-text" data-field="error" @(string.IsNullOrEmpty(d.ErrorMessage) ? "hidden" : "")>@d.ErrorMessage</p>
+                            </div>
+                        </td>
+                        <td data-label="Pages · chunks" class="mono" data-field="counts">@d.PageCount · @d.ChunkCount</td>
+                        <td class="actions">
+                            <form method="post" asp-page-handler="Reindex" asp-route-id="@d.Id">
+                                <button type="submit" class="btn btn-line btn-sm" data-action="reindex" disabled="@(d.Status == DocumentStatus.Processing)">
+                                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Re-index
+                                </button>
+                            </form>
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@d.Id" data-confirm="Delete &quot;@d.FileName&quot;? Its vectors and the original file are removed too.">
+                                <button type="submit" class="btn btn-line btn-sm btn-danger-text"><i class="bi bi-trash3" aria-hidden="true"></i> Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+        }
+        <p class="live-note" id="liveNote"><span class="dot" aria-hidden="true"></span><span>Connecting for live updates…</span></p>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+    <script src="~/js/documents.js" asp-append-version="true"></script>
+}

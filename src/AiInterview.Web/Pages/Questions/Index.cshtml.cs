@@ -10,7 +10,7 @@ public class IndexModel : PageModel
     public PlaceholderInfo Info { get; } = new(
         "Dev B",
         "QST-04, QST-05",
-        "Sinh câu hỏi từ tài liệu bằng AI, giảng viên duyệt/sửa/loại bỏ trước khi vào ngân hàng chính thức.");
+        "Generate questions from documents with AI; the lecturer edits, approves or rejects them before they enter the official bank.");
 
     public void OnGet()
     {

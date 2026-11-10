@@ -29,8 +29,18 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
         Assert.Contains("Razor Pages khác MVC ở điểm nào?", html); // từ SampleDataSeeder, đi qua Service -> Repository
     }
 
+    [Fact]
+    public async Task Documents_Page_And_Status_Endpoint_Work()
+    {
+        var page = await _client.GetStringAsync("/Documents");
+        var status = await _client.GetAsync("/Documents?handler=Status");
+
+        Assert.Contains("Upload a file", page);
+        Assert.Equal(HttpStatusCode.OK, status.StatusCode);
+        Assert.Equal("application/json", status.Content.Headers.ContentType?.MediaType);
+    }
+
     [Theory]
-    [InlineData("/Documents")]
     [InlineData("/Questions")]
     [InlineData("/Sessions")]
     [InlineData("/Interview/Room")]
@@ -41,6 +51,6 @@ public class AppSmokeTests(WebApplicationFactory<Program> factory) : IClassFixtu
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Trang khung", html);
+        Assert.Contains("Not built yet", html);
     }
 }

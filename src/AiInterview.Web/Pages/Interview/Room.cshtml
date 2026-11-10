@@ -1,9 +1,13 @@
 @page
 @model AiInterview.Web.Pages.Interview.RoomModel
 @{
-    ViewData["Title"] = "Phòng phỏng vấn";
+    ViewData["Title"] = "Interview room";
     ViewData["Active"] = "room";
 }
-<h2 class="fw-bold mb-1">Phòng phỏng vấn</h2>
-<div class="small text-secondary mb-3">Phỏng vấn vấn đáp với AI giám khảo.</div>
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Interview room</h1>
+        <p class="page-lead">Oral interview with the AI examiner.</p>
+    </div>
+</div>
 <partial name="_Placeholder" model="Model.Info" />

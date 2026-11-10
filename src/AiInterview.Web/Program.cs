@@ -7,26 +7,27 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Infra:Mode (Fake|Real) và ROLE (web|worker|all) quyết định app chạy thế nào.
+// Infra:Mode (Fake|Real) and ROLE (web|worker|all) decide how the app runs.
 var infra = InfraOptions.From(builder.Configuration);
 builder.Services.AddSingleton(infra);
 
-// Kiến trúc 3 lớp: PageModel -> Service -> Repository.
-// Web chỉ biết lớp Service: AddServices tự đăng ký cả lớp Repository bên trong.
+// 3-layer architecture: PageModel -> Service -> Repository.
+// Web only knows the Service layer: AddServices registers the Repository layer internally.
 builder.Services.AddServices(builder.Configuration, infra);
 
 if (infra.RunsWeb)
 {
     builder.Services.AddRazorPages();
 
-    // Mặc định Razor mã hóa ký tự tiếng Việt thành &#x...; trong HTML. Cho phép mọi ký tự Unicode để HTML giữ nguyên chữ.
+    // By default Razor encodes non-ASCII characters (e.g. Vietnamese sample data) as &#x...;. Allow all Unicode ranges.
     builder.Services.AddWebEncoders(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 
     var signalR = builder.Services.AddSignalR();
+    builder.Services.AddHubServices();
     var redis = builder.Configuration["Redis:ConnectionString"];
     if (infra.IsReal && !string.IsNullOrWhiteSpace(redis))
     {
-        // Nhiều pod web cần backplane để SignalR gửi đúng client.
+        // Several web pods need a backplane so SignalR reaches the right client.
         signalR.AddStackExchangeRedis(redis);
     }
 }
@@ -48,11 +49,11 @@ if (infra.RunsWeb)
     app.MapHubs();
 }
 
-// Probe cho Kubernetes: live = tiến trình còn sống, ready = kết nối được SQL (kiểm tra đăng ký trong lớp Data).
+// Kubernetes probes: live = process is up, ready = SQL is reachable (check registered in the Data layer).
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
 app.Run();
 
-// Cho phép test tích hợp (WebApplicationFactory<Program>).
+// Allows integration tests (WebApplicationFactory<Program>).
 public partial class Program;

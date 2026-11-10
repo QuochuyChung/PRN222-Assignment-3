@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AiInterview.Data.Registration;
 
-/// <summary>Đăng ký repository của module Ingestion — chủ sở hữu: Dev A.</summary>
+/// <summary>Repository registrations of the Ingestion module. Owner: Dev A.</summary>
 internal static class IngestionRepositoryRegistration
 {
     public static IServiceCollection AddIngestionRepositories(this IServiceCollection services, InfraOptions infra)
@@ -13,12 +13,12 @@ internal static class IngestionRepositoryRegistration
         if (infra.IsFake)
         {
             services.AddSingleton<IDocumentRepository, FakeDocumentRepository>();
-            // TODO ING-01: services.AddSingleton<IFileRepository, FakeFileRepository>();
+            services.AddSingleton<IFileRepository, FakeFileRepository>();
         }
         else
         {
-            // TODO ING-02: services.AddSingleton<IDocumentRepository, MongoDocumentRepository>();
-            // TODO ING-01: services.AddSingleton<IFileRepository, MinioFileRepository>();
+            services.AddSingleton<IDocumentRepository, MongoDocumentRepository>();
+            services.AddSingleton<IFileRepository, MinioFileRepository>();
         }
 
         return services;

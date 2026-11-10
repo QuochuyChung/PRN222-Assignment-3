@@ -7,9 +7,9 @@ namespace AiInterview.Web.Pages.Sessions;
 public class IndexModel : PageModel
 {
     public PlaceholderInfo Info { get; } = new(
-        "Dev D (giao diện) + Dev C (service)",
+        "Dev D (UI) + Dev C (service)",
         "UI-02, ENG-02",
-        "Tạo phiên thi, chọn số câu / số lượt hỏi xoáy / thời gian trả lời, kiểm tra mic trước khi bắt đầu.");
+        "Create a session, pick the number of questions, follow-ups and answer time, and test the microphone before starting.");
 
     public void OnGet()
     {

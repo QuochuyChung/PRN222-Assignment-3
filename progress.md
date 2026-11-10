@@ -4,7 +4,7 @@ Cập nhật file này **trong cùng PR** của task. Phân công chi tiết: [t
 
 **Trạng thái:** `Todo` → `In progress` → `Review` → `Merged (Fake)` → `Verified on cluster` (mới được coi là Done).
 
-Cập nhật lần cuối: 2026-11-09
+Cập nhật lần cuối: 2026-11-10
 
 ## Vướng mắc
 
@@ -44,15 +44,15 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 
 | ID | Việc | Trạng thái | PR | Cập nhật | Ghi chú |
 |---|---|---|---|---|---|
-| ING-01 | `IFileRepository` (Fake + MinIO) | Todo | | | |
-| ING-02 | Trang upload tài liệu | Todo | | | |
-| ING-03 | Text extractor PPTX/PDF/DOCX | Todo | | | |
-| ING-04 | Chunker | Todo | | | |
-| ING-05 | `IEmbeddingRepository` (Fake + Gemini) | Todo | | | |
-| ING-06 | `IVectorRepository` (In-memory + Qdrant) | Todo | | | |
-| ING-07 | DocumentWorker (`docs-stream`) | Todo | | | |
-| ING-08 | Trang danh sách tài liệu, SignalR tiến độ, xóa, re-index | Todo | | | |
-| ING-09 | Seed và test ingestion | Todo | | | |
+| ING-01 | `IFileRepository` (Fake + MinIO) | Review | | 2026-11-10 | `FakeFileRepository` + `MinioFileRepository` (tự tạo bucket, đóng response S3 ngay) |
+| ING-02 | Trang upload tài liệu | Review | | 2026-11-10 | Kiểm tra loại/dung lượng ở client và service; thứ tự file → Mongo `Processing` → `docs-stream` |
+| ING-03 | Text extractor PPTX/PDF/DOCX | Review | | 2026-11-10 | `DocumentTextExtractor`: PDF theo trang, PPTX theo slide, DOCX theo heading; PDF scan/hỏng → `Failed` không retry |
+| ING-04 | Chunker | Review | | 2026-11-10 | Cửa sổ trượt theo trang, cắt ở câu/khoảng trắng; `Ingestion:ChunkSize`/`ChunkOverlap` |
+| ING-05 | `IEmbeddingRepository` (Fake + Gemini) | Review | | 2026-11-10 | Fake: feature hashing ổn định; Gemini: batch 50, giãn cách 250ms, retry 429/5xx có backoff |
+| ING-06 | `IVectorRepository` (In-memory + Qdrant) | Review | | 2026-11-10 | Point id = UUID băm từ `{documentId}:{chunkIndex}` (giữ id gốc trong payload) |
+| ING-07 | DocumentWorker (`docs-stream`) | Review | | 2026-11-10 | Retry `Ingestion:MaxAttempts` lần → `Failed` + `docs-stream-dead`; Redis `XAUTOCLAIM` nhận lại message treo; consumer = HOSTNAME |
+| ING-08 | Trang danh sách tài liệu, SignalR tiến độ, xóa, re-index | Review | | 2026-11-10 | Hub `/hubs/documents`, polling `?handler=Status` khi mất SignalR; `DeleteAsync` xóa vector + file + metadata |
+| ING-09 | Seed và test ingestion | Review | | 2026-11-10 | `seed/ingestion/` (DOCX/PPTX/PDF tiếng Việt + PDF scan), test ở `tests/AiInterview.Tests/Ingestion/` |
 
 ## Dev B — Retrieval, Question, Logging
 

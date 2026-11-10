@@ -1,11 +1,14 @@
 using AiInterview.Common.Configuration;
+using AiInterview.Data.Repositories.Ai;
+using AiInterview.Data.Repositories.Queue;
+using AiInterview.Data.Repositories.Vectors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AiInterview.Data.Registration;
 
 /// <summary>
-/// Repository dùng chung giữa nhiều module. Người nào cài đặt trước thì thêm đăng ký vào đây
-/// (báo M nếu nhiều người cùng cần), tránh mỗi module tự đăng ký một bản riêng.
+/// Repositories shared by several modules. Whoever implements one first registers it here
+/// (tell M if several people need it), so modules do not each register their own copy.
 /// </summary>
 internal static class SharedRepositoryRegistration
 {
@@ -13,17 +16,17 @@ internal static class SharedRepositoryRegistration
     {
         if (infra.IsFake)
         {
-            // TODO ING-06 (Dev A): IVectorRepository      -> InMemoryVectorRepository
-            // TODO ING-05 (Dev A): IEmbeddingRepository   -> FakeEmbeddingRepository
-            // TODO QST-02 / ENG-04: ILlmRepository        -> FakeLlmRepository (trả JSON kịch bản mẫu)
-            // TODO ING-07 / LOG-01: IMessageQueueRepository -> InMemoryMessageQueueRepository
+            services.AddSingleton<IVectorRepository, InMemoryVectorRepository>();
+            services.AddSingleton<IEmbeddingRepository, FakeEmbeddingRepository>();
+            services.AddSingleton<IMessageQueueRepository, InMemoryMessageQueueRepository>();
+            // TODO QST-02 / ENG-04: ILlmRepository -> FakeLlmRepository (returns sample JSON scripts)
         }
         else
         {
-            // TODO ING-06 (Dev A): IVectorRepository      -> QdrantVectorRepository
-            // TODO ING-05 (Dev A): IEmbeddingRepository   -> GeminiEmbeddingRepository
-            // TODO QST-02 / ENG-04: ILlmRepository        -> GeminiLlmRepository
-            // TODO ING-07 / LOG-01: IMessageQueueRepository -> RedisMessageQueueRepository
+            services.AddSingleton<IVectorRepository, QdrantVectorRepository>();
+            services.AddSingleton<IEmbeddingRepository, GeminiEmbeddingRepository>();
+            services.AddSingleton<IMessageQueueRepository, RedisMessageQueueRepository>();
+            // TODO QST-02 / ENG-04: ILlmRepository -> GeminiLlmRepository
         }
 
         return services;

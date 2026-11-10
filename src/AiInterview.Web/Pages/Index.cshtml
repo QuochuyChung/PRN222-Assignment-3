@@ -8,90 +8,71 @@
     var s = Model.Summary;
 }
 
-<div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+<div class="page-head">
     <div>
-        <h2 class="fw-bold mb-1">Dashboard</h2>
-        <div class="small text-secondary">Tổng quan hệ thống phỏng vấn vấn đáp bằng giọng nói.</div>
+        <p class="eyebrow">Overview</p>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-lead">Voice-based oral exams: documents in, questions out, follow-ups when an answer is vague.</p>
+    </div>
+    <a class="btn btn-accent" asp-page="/Documents/Index"><i class="bi bi-upload" aria-hidden="true"></i> Upload material</a>
+</div>
+
+<div class="stats">
+    <div class="stat intro">
+        <span class="mode">@Infra.Mode mode</span>
+        <h2>An AI examiner for oral tests</h2>
+        <p>Questions come from your course material. The AI asks a follow-up when an answer is still unclear.</p>
+        <a asp-page="/Interview/Room">Open the interview room <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Processed documents</div>
+        <div class="stat-value">@s.ProcessedDocuments<small>/@s.TotalDocuments</small></div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Approved questions</div>
+        <div class="stat-value">@s.ApprovedQuestions</div>
+        <div class="stat-note">@s.DraftQuestions drafts waiting for review</div>
+    </div>
+    <div class="stat">
+        <div class="stat-label">Completed sessions</div>
+        <div class="stat-value">@s.CompletedSessions<small>/@s.TotalSessions</small></div>
+        <div class="stat-note">@s.TotalTurns question and answer turns</div>
     </div>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-xl-4">
-        <div class="card hero h-100 position-relative overflow-hidden">
-            <div class="card-body p-4">
-                <span class="badge rounded-pill bg-white bg-opacity-10 fw-medium">
-                    <span style="color:var(--accent)">●</span> Chế độ @Infra.Mode
-                </span>
-                <div class="fs-4 fw-bold mt-3" style="max-width:15rem">AI giám khảo ảo cho vấn đáp</div>
-                <div class="small mt-2 opacity-75" style="max-width:16rem">
-                    Câu hỏi sinh từ tài liệu môn học, AI hỏi xoáy khi câu trả lời còn mơ hồ.
-                </div>
-                <a asp-page="/Interview/Room" class="d-inline-block mt-4 small fw-semibold text-white text-decoration-none">
-                    Vào phòng phỏng vấn <i class="bi bi-arrow-right"></i>
-                </a>
-                <i class="bi bi-mic-fill hero-mark"></i>
-            </div>
-        </div>
+<section class="panel">
+    <div class="panel-head">
+        <h2 class="panel-title">Recent turns</h2>
+        <a class="btn btn-line btn-sm" asp-page="/Logs/Index">View logs</a>
     </div>
-
-    <div class="col-md-4 col-xl-2">
-        <div class="card h-100"><div class="card-body">
-            <div class="small text-secondary">Tài liệu đã xử lý</div>
-            <div class="fs-2 fw-bold mt-2">@s.ProcessedDocuments<span class="fs-6 text-secondary">/@s.TotalDocuments</span></div>
-        </div></div>
-    </div>
-    <div class="col-md-4 col-xl-3">
-        <div class="card h-100"><div class="card-body">
-            <div class="small text-secondary">Câu hỏi đã duyệt</div>
-            <div class="fs-2 fw-bold mt-2">@s.ApprovedQuestions</div>
-            <div class="small text-secondary">@s.DraftQuestions bản nháp chờ duyệt</div>
-        </div></div>
-    </div>
-    <div class="col-md-4 col-xl-3">
-        <div class="card h-100"><div class="card-body">
-            <div class="small text-secondary">Phiên thi hoàn thành</div>
-            <div class="fs-2 fw-bold mt-2">@s.CompletedSessions<span class="fs-6 text-secondary">/@s.TotalSessions</span></div>
-            <div class="small text-secondary">@s.TotalTurns lượt hỏi/đáp</div>
-        </div></div>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-body p-0">
-        <div class="d-flex align-items-center justify-content-between p-4 pb-2">
-            <div class="fw-bold">Lượt hỏi/đáp gần đây</div>
-            <a class="btn btn-sm btn-accent" asp-page="/Logs/Index">Xem nhật ký</a>
-        </div>
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead>
-                    <tr><th class="ps-4">Loại</th><th>Câu hỏi</th><th>Trả lời</th><th class="pe-4">Kết thúc</th></tr>
-                </thead>
-                <tbody>
-                @if (s.RecentTurns.Count == 0)
-                {
-                    <tr><td colspan="4" class="text-center text-secondary py-4">Chưa có lượt nào.</td></tr>
-                }
-                @foreach (var t in s.RecentTurns)
-                {
-                    <tr>
-                        <td class="ps-4">
-                            @if (t.IsFollowUp)
-                            {
-                                <span class="badge rounded-pill text-bg-warning">Hỏi xoáy</span>
-                            }
-                            else
-                            {
-                                <span class="badge rounded-pill text-bg-light border">Câu chính</span>
-                            }
-                        </td>
-                        <td class="text-truncate" style="max-width:20rem">@t.QuestionText</td>
-                        <td class="text-secondary small text-truncate" style="max-width:22rem">@t.TranscriptPreview</td>
-                        <td class="text-secondary small text-nowrap pe-4">@t.EndedAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    @if (s.RecentTurns.Count == 0)
+    {
+        <div class="empty"><i class="bi bi-chat-square-text" aria-hidden="true"></i><p>No turns yet.</p></div>
+    }
+    else
+    {
+        <table class="table-stack">
+            <thead><tr><th scope="col">Type</th><th scope="col">Question</th><th scope="col">Answer</th><th scope="col">Ended</th></tr></thead>
+            <tbody>
+            @foreach (var t in s.RecentTurns)
+            {
+                <tr>
+                    <td data-label="Type">
+                        @if (t.IsFollowUp)
+                        {
+                            <span class="status status-processing">Follow-up</span>
+                        }
+                        else
+                        {
+                            <span class="chip">Main question</span>
+                        }
+                    </td>
+                    <td data-label="Question"><div class="truncate" title="@t.QuestionText">@t.QuestionText</div></td>
+                    <td data-label="Answer"><div class="truncate text-secondary" title="@t.TranscriptPreview">@t.TranscriptPreview</div></td>
+                    <td data-label="Ended" class="text-nowrap mono">@t.EndedAt.ToString("dd/MM HH:mm") UTC</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

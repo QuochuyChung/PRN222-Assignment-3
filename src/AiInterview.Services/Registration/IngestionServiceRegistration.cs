@@ -1,22 +1,28 @@
 using AiInterview.Common.Configuration;
+using AiInterview.Services.Documents;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AiInterview.Services.Registration;
 
-/// <summary>Đăng ký service của module Ingestion — chủ sở hữu: Dev A.</summary>
+/// <summary>Service registrations of the Ingestion module. Owner: Dev A.</summary>
 internal static class IngestionServiceRegistration
 {
     public static IServiceCollection AddIngestionServices(this IServiceCollection services, InfraOptions infra)
     {
-        // TODO ING-02/08: services.AddScoped<IDocumentService, DocumentService>();
-        // TODO ING-03:    services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
-        // TODO ING-04:    services.AddSingleton<IChunker, Chunker>();
-        // TODO ING-07:    services.AddScoped<IDocumentProcessingService, DocumentProcessingService>();
+        services.AddOptions<IngestionOptions>().BindConfiguration(IngestionOptions.SectionName);
+
+        services.AddScoped<IDocumentService, DocumentService>();
+        services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
+        services.AddSingleton<IChunker, Chunker>();
+        services.AddScoped<IDocumentProcessingService, DocumentProcessingService>();
+
+        // Web replaces this with the SignalR notifier (registered later, so it wins).
+        services.AddSingleton<IDocumentProgressNotifier, NullDocumentProgressNotifier>();
 
         if (infra.RunsWorker)
         {
-            // TODO ING-07: services.AddHostedService<DocumentWorker>();
-            // Worker là singleton: lấy service Scoped qua IServiceScopeFactory.CreateScope().
+            // The worker is a singleton: it resolves scoped services through IServiceScopeFactory.CreateScope().
+            services.AddHostedService<DocumentWorker>();
         }
 
         return services;

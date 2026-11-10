@@ -9,7 +9,7 @@ public class IndexModel : PageModel
     public PlaceholderInfo Info { get; } = new(
         "Dev B",
         "LOG-02",
-        "Xem câu hỏi, transcript, lượt hỏi xoáy, lý do và nguồn trích dẫn của từng phiên thi.");
+        "See the questions, transcripts, follow-ups, reasons and cited sources of each session.");
 
     public void OnGet()
     {
