@@ -19,14 +19,14 @@ internal static class SharedRepositoryRegistration
             services.AddSingleton<IVectorRepository, InMemoryVectorRepository>();
             services.AddSingleton<IEmbeddingRepository, FakeEmbeddingRepository>();
             services.AddSingleton<IMessageQueueRepository, InMemoryMessageQueueRepository>();
-            // TODO QST-02 / ENG-04: ILlmRepository -> FakeLlmRepository (returns sample JSON scripts)
+            // ILlmRepository do module Questions đăng ký (QuestionRepositoryRegistration) — QST-02.
         }
         else
         {
             services.AddSingleton<IVectorRepository, QdrantVectorRepository>();
             services.AddSingleton<IEmbeddingRepository, GeminiEmbeddingRepository>();
             services.AddSingleton<IMessageQueueRepository, RedisMessageQueueRepository>();
-            // TODO QST-02 / ENG-04: ILlmRepository -> GeminiLlmRepository
+            // ILlmRepository do module Questions đăng ký (QuestionRepositoryRegistration) — QST-02.
         }
 
         return services;

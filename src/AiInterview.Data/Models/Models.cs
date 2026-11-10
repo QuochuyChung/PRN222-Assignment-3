@@ -70,6 +70,24 @@ public class SessionState
 
     /// <summary>Danh sách câu hỏi chính của phiên, theo thứ tự hỏi.</summary>
     public List<Guid> QuestionIds { get; set; } = new();
+
+    /// <summary>
+    /// Số lần đã nhắc vì im lặng trong câu hỏi hiện tại. Luật cứng ENG-05: nhắc một lần rồi bỏ qua câu.
+    /// Đếm lại từ 0 mỗi khi sang câu mới. Chỉ lưu trong Redis/in-memory, không thêm cột SQL.
+    /// </summary>
+    public int SilencePrompts { get; set; }
+
+    /// <summary>
+    /// Nội dung câu hỏi đang hỏi. Với câu chính lấy từ ngân hàng câu hỏi; với câu hỏi xoáy do LLM sinh
+    /// nên không tra lại được từ <see cref="QuestionId"/> — cần lưu để khôi phục khi F5 (ENG-09).
+    /// </summary>
+    public string? CurrentQuestionText { get; set; }
+
+    /// <summary>Lượt hiện tại là câu hỏi xoáy (true) hay câu chính (false).</summary>
+    public bool IsFollowUp { get; set; }
+
+    /// <summary>Thời điểm câu hỏi hiện tại bắt đầu được hỏi (UTC) — dùng cho <c>TurnMessage.StartedAt</c>.</summary>
+    public DateTime? TurnStartedAt { get; set; }
 }
 
 /// <summary>Một message trong Redis Stream.</summary>

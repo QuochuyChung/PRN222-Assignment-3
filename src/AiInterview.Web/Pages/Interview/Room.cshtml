@@ -4,6 +4,8 @@
     ViewData["Title"] = "Interview room";
     ViewData["Active"] = "room";
 }
+@* Token cho các POST handler của ENG-07: JS gửi header "RequestVerificationToken". *@
+@Html.AntiForgeryToken()
 <div class="page-head">
     <div>
         <h1 class="page-title">Interview room</h1>
@@ -11,3 +13,4 @@
     </div>
 </div>
 <partial name="_Placeholder" model="Model.Info" />
+@* Chỉ Dev D thay phần thân trang; handler của Dev C đã sẵn ở Room.cshtml.cs (ENG-07). *@

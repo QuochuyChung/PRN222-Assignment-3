@@ -1,4 +1,5 @@
 using AiInterview.Common.Configuration;
+using AiInterview.Services.Interview;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AiInterview.Services.Registration;
@@ -8,9 +9,12 @@ internal static class EngineServiceRegistration
 {
     public static IServiceCollection AddEngineServices(this IServiceCollection services, InfraOptions infra)
     {
-        // TODO ENG-02/03/05/06/07/09: services.AddScoped<IInterviewSessionService, InterviewSessionService>();
-        // TODO ENG-04:                services.AddScoped<IFollowUpDecider, FollowUpDecider>();
-        // TODO ENG-08:                services.AddScoped<ITurnPublisher, TurnPublisher>();
+        // ENG-04: ILlmRepository do QST-02 (Dev B) đăng ký trong QuestionRepositoryRegistration
+        // nên ở đây chỉ cần nối IFollowUpDecider -> FollowUpDecider.
+        services.AddScoped<IFollowUpDecider, FollowUpDecider>();
+
+        services.AddScoped<IInterviewSessionService, InterviewSessionService>();
+        services.AddScoped<ITurnPublisher, TurnPublisher>();
         return services;
     }
 }
