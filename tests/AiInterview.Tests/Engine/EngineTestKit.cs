@@ -98,6 +98,13 @@ internal sealed class EngineTestKit : IDisposable
         return await query(scope.ServiceProvider.GetRequiredService<AppDbContext>());
     }
 
+    /// <summary>Chạy một thao tác ghi (ví dụ seeder) trong một scope riêng.</summary>
+    public async Task QueryAsync(Func<AppDbContext, Task> action)
+    {
+        await using var scope = _provider.CreateAsyncScope();
+        await action(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+    }
+
     public Task<InterviewSession?> GetSessionAsync(Guid id)
         => QueryAsync(db => db.InterviewSessions.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id));
 

@@ -80,7 +80,7 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 | ENG-07 | Endpoint phiên thi | Review | | 2026-11-10 | 5 handler **Razor Page** trong `Room.cshtml.cs` (không thêm controller nên `Program.cs` không đổi): `Start`, `State` (GET, trả `remainingSeconds`), `SubmitAnswer`, `Skip`, `Finish`. Lỗi map sang 400/404/409 + `{error}`; POST cần antiforgery token (đã thêm `@Html.AntiForgeryToken()`). Sửa lỗi: phiên `Created` (chưa start) không còn nhận câu trả lời |
 | ENG-08 | `ITurnPublisher` | Review | | 2026-11-10 | `TurnPublisher` gọi `EnsureGroupAsync` + `PublishAsync(turns-stream, turn.ToFields())`; test round-trip `ToFields` → `FromFields` và lỗi hàng đợi được log rồi ném lại |
 | ENG-09 | Khôi phục khi F5 | Review | | 2026-11-10 | `GetStateAsync` trả đúng câu hiện tại (kể cả câu xoáy do LLM sinh, lưu ở `SessionState.CurrentQuestionText`), `followUpCount`, `RemainingSeconds` từ deadline tuyệt đối. Gọi `state` nhiều lần không gia hạn deadline, không tiêu lượt xoáy, không publish. Sửa lỗi: state `Finished` không còn bị ghi lại vào Redis sau `FinishAsync` |
-| ENG-10 | Seed và test engine | Todo | | | |
+| ENG-10 | Seed và test engine | Review | | 2026-11-10 | `seed/engine/answers.md`: 5 kịch bản trả lời (đủ ý / thiếu ý / mơ hồ / im lặng / quá giờ) cho demo không cần mic; `EngineDataSeeder` (6 câu `Approved`, idempotent, không trùng câu của BASE); test: `SessionStateRepositoryTests`, `InterviewStateMachineTests` (36 cặp), `HardRulesTests`, `TurnPublisherTests`, `FollowUpDeciderTests` (3 kiểu trả lời), `InterviewSessionTests`, `DuplicateTurnTests`, `HardRuleIntegrationTests`, `RestoreAfterRefreshTests`, `EngineSeedTests` |
 
 ## Dev D — Interview UI
 
