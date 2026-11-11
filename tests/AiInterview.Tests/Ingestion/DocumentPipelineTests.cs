@@ -1,7 +1,7 @@
 using AiInterview.Common.Constants;
 using AiInterview.Common.Enums;
-using AiInterview.Data.Repositories.Ai;
-using AiInterview.Services.Documents;
+using AiInterview.DAL.Repositories.Ai;
+using AiInterview.BLL.Documents;
 
 namespace AiInterview.Tests.Ingestion;
 

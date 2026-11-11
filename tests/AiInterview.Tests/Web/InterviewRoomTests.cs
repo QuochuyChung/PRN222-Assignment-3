@@ -1,5 +1,5 @@
 using AiInterview.Common.Enums;
-using AiInterview.Services.Interview;
+using AiInterview.BLL.Interview;
 using AiInterview.Web.Pages.Interview;
 using SessionsModel = AiInterview.Web.Pages.Sessions.IndexModel;
 using Microsoft.AspNetCore.Mvc;

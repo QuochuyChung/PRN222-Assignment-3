@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using AiInterview.Common.Configuration;
-using AiInterview.Data.Repositories.Ai;
+using AiInterview.DAL.Repositories.Ai;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 

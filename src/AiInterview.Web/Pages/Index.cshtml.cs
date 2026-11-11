@@ -1,4 +1,4 @@
-using AiInterview.Services.Dashboard;
+using AiInterview.BLL.Dashboard;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AiInterview.Web.Pages;

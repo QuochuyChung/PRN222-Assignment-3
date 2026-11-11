@@ -1,7 +1,7 @@
 using AiInterview.Common.Configuration;
 using AiInterview.Common.Enums;
-using AiInterview.Services.Interview;
-using AiInterview.Services.Registration;
+using AiInterview.BLL.Interview;
+using AiInterview.BLL.Registration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -88,8 +88,8 @@ public class EngineRegistrationTests
         using var provider = Build();
         using var scope = provider.CreateScope();
 
-        Assert.NotNull(scope.ServiceProvider.GetRequiredService<AiInterview.Services.Retrieval.IRetrievalService>());
-        Assert.NotNull(scope.ServiceProvider.GetRequiredService<AiInterview.Services.TurnLog.ITurnLogService>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<AiInterview.BLL.Retrieval.IRetrievalService>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<AiInterview.BLL.TurnLog.ITurnLogService>());
     }
 
     [Fact]

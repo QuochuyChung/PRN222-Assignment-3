@@ -1,10 +1,10 @@
 using AiInterview.Common.Configuration;
-using AiInterview.Data.Repositories.Ai;
-using AiInterview.Data.Repositories.Documents;
-using AiInterview.Data.Repositories.Files;
-using AiInterview.Data.Repositories.Queue;
-using AiInterview.Data.Repositories.Vectors;
-using AiInterview.Services.Documents;
+using AiInterview.DAL.Repositories.Ai;
+using AiInterview.DAL.Repositories.Documents;
+using AiInterview.DAL.Repositories.Files;
+using AiInterview.DAL.Repositories.Queue;
+using AiInterview.DAL.Repositories.Vectors;
+using AiInterview.BLL.Documents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;

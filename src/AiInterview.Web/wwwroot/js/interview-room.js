@@ -134,27 +134,40 @@
         });
     }
 
+    // Gọi Start: chuyển phiên sang InProgress trong SQL và đặt hạn trả lời ở server.
+    // Start gọi lặp vẫn an toàn (không cấp thêm thời gian nếu đã có hạn), nên F5 giữa chừng không sao.
+    async function startSession() {
+        const startResp = await fetch(`?handler=Start&sessionId=${sessionId}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': csrfToken }
+        });
+        if (!startResp.ok) {
+            throw new Error(await readServerError(startResp));
+        }
+        applyState(await startResp.json());
+    }
+
     async function loadOrStartState() {
         setAiState('Đang tải trạng thái...', 'text-secondary');
         try {
+            // Phiên mới tạo (Created) đã có sẵn state trong Redis nên "State" luôn trả OK, nhưng SQL vẫn là Created
+            // và server từ chối mọi câu trả lời ("This interview has not started yet"). Phải Start trước.
+            if (appEl.dataset.sessionStatus === 'Created') {
+                await startSession();
+                return;
+            }
+
             const resp = await fetch(`?handler=State&sessionId=${sessionId}`);
             if (resp.ok) {
                 const state = await resp.json();
                 applyState(state);
             } else {
-                // Thử start nếu chưa có state
-                const startResp = await fetch(`?handler=Start&sessionId=${sessionId}`, {
-                    method: 'POST',
-                    headers: { 'RequestVerificationToken': csrfToken }
-                });
-                if (startResp.ok) {
-                    const state = await startResp.json();
-                    applyState(state);
-                }
+                // Phiên đang chạy nhưng không còn state (Redis hết hạn): Start sẽ khôi phục.
+                await startSession();
             }
         } catch (err) {
             console.error('Lỗi tải trạng thái:', err);
-            setAiState('Lỗi kết nối server', 'text-danger');
+            setAiState(err && err.message ? 'Lỗi: ' + err.message : 'Lỗi kết nối server', 'text-danger');
         }
     }
 

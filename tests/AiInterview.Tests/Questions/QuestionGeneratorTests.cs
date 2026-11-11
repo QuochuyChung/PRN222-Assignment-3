@@ -1,10 +1,10 @@
 using AiInterview.Common.Configuration;
 using AiInterview.Common.Enums;
-using AiInterview.Data.Models;
-using AiInterview.Data.Repositories.Ai;
-using AiInterview.Data.Repositories.Vectors;
-using AiInterview.Services.Questions;
-using AiInterview.Services.Retrieval;
+using AiInterview.DAL.Models;
+using AiInterview.DAL.Repositories.Ai;
+using AiInterview.DAL.Repositories.Vectors;
+using AiInterview.BLL.Questions;
+using AiInterview.BLL.Retrieval;
 using Microsoft.Extensions.Options;
 
 namespace AiInterview.Tests.Questions;

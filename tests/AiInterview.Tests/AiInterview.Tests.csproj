@@ -24,8 +24,8 @@
   <!-- Project test tham chiếu đủ cả 4 lớp (để kiểm thử và kiểm tra kiến trúc). Chỉ test mới được như vậy. -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\AiInterview.Common\AiInterview.Common.csproj" />
-    <ProjectReference Include="..\..\src\AiInterview.Data\AiInterview.Data.csproj" />
-    <ProjectReference Include="..\..\src\AiInterview.Services\AiInterview.Services.csproj" />
+    <ProjectReference Include="..\..\src\AiInterview.DAL\AiInterview.DAL.csproj" />
+    <ProjectReference Include="..\..\src\AiInterview.BLL\AiInterview.BLL.csproj" />
     <ProjectReference Include="..\..\src\AiInterview.Web\AiInterview.Web.csproj" />
   </ItemGroup>
 

@@ -13,17 +13,17 @@ Pages/*.cshtml.cs (PageModel)  →  Service  →  Repository  →  SQL / Mongo /
 | Project | Vai trò |
 |---|---|
 | `src/AiInterview.Web` | Razor Pages + code-behind (PageModel), SignalR hub, `Program.cs`. **Chỉ gọi Service** |
-| `src/AiInterview.Services` | Logic nghiệp vụ (prompt, state machine, luật cứng, chunking...). **Chỉ gọi interface Repository** |
-| `src/AiInterview.Data` | Entity, `DbContext`, Repository (interface + Fake + Real), migration, seed |
+| `src/AiInterview.BLL` | Logic nghiệp vụ (prompt, state machine, luật cứng, chunking...). **Chỉ gọi interface Repository** |
+| `src/AiInterview.DAL` | Entity, `DbContext`, Repository (interface + Fake + Real), migration, seed |
 | `src/AiInterview.Common` | Options, hằng số (tên stream, key Redis), helper log |
 | `tests/AiInterview.Tests` | xUnit: unit test + smoke test chạy cả app ở chế độ Fake |
 
-Phụ thuộc một chiều: `Web → Services → Data → Common`.
+Phụ thuộc một chiều: `Web → BLL → DAL → Common`.
 
 **Ranh giới được khóa bằng máy:**
 
-- Web **không nhìn thấy** Data: `Services.csproj` tham chiếu Data với `PrivateAssets="compile"`, nên `using AiInterview.Data...` trong Web là lỗi biên dịch. Web chỉ ráp ứng dụng qua `AddServices(...)` và `InitializeApplicationAsync(...)`.
-- Service trả **DTO** (`QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`...), không trả entity của Data. Cài đặt service là `internal`, chỉ interface và DTO là `public`.
+- Web **không nhìn thấy** DAL: `AiInterview.BLL.csproj` tham chiếu DAL với `PrivateAssets="compile"`, nên `using AiInterview.DAL...` trong Web là lỗi biên dịch. Web chỉ ráp ứng dụng qua `AddServices(...)` và `InitializeApplicationAsync(...)`.
+- Service trả **DTO** (`QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`...), không trả entity của DAL. Cài đặt service là `internal`, chỉ interface và DTO là `public`.
 - Enum dùng chung (`QuestionStatus`, `BloomLevel`, `SessionStatus`, `InterviewState`, `DocumentStatus`) nằm ở `AiInterview.Common.Enums`.
 - `tests/AiInterview.Tests/Architecture/ArchitectureTests.cs` kiểm tra các luật trên; vi phạm thì `dotnet test` đỏ.
 
@@ -57,9 +57,9 @@ Endpoint kiểm tra sức khỏe: `/health/live` (tiến trình sống) và `/he
 
 Ví dụ luồng có sẵn: `Pages/Index.cshtml.cs` → `IDashboardService` → `IQuestionRepository` / `ISessionRepository`...
 
-1. **Repository** (`AiInterview.Data/Repositories/<Khu vực>/`): interface + bản Fake + bản Real.
-2. **Đăng ký** repository trong `AiInterview.Data/Registration/<Module>RepositoryRegistration.cs`, chọn Fake/Real theo `infra.IsFake`.
-3. **Service** (`AiInterview.Services/<Khu vực>/`): interface + cài đặt, chỉ inject interface repository. Đăng ký trong `AiInterview.Services/Registration/<Module>ServiceRegistration.cs`.
+1. **Repository** (`AiInterview.DAL/Repositories/<Khu vực>/`): interface + bản Fake + bản Real.
+2. **Đăng ký** repository trong `AiInterview.DAL/Registration/<Module>RepositoryRegistration.cs`, chọn Fake/Real theo `infra.IsFake`.
+3. **Service** (`AiInterview.BLL/<Khu vực>/`): interface + cài đặt, chỉ inject interface repository. Đăng ký trong `AiInterview.BLL/Registration/<Module>ServiceRegistration.cs`.
 4. **PageModel** (`AiInterview.Web/Pages/...`): inject interface Service qua constructor.
 
 ```csharp
@@ -95,17 +95,17 @@ dotnet tool restore
 ```
 
 ```bash
-dotnet ef migrations add TenMigration --project src/AiInterview.Data --output-dir Migrations
+dotnet ef migrations add TenMigration --project src/AiInterview.DAL --output-dir Migrations
 ```
 
 ## Ai sở hữu thư mục nào (để tránh đụng nhau khi merge)
 
 | Người | Thư mục |
 |---|---|
-| **M** | `Common/`, `Data/AppDbContext.cs`, `Data/Entities/`, `Data/Migrations/`, `Data/Registration/SharedClientsRegistration.cs`, `Data/Registration/SharedRepositoryRegistration.cs`, `Web/Program.cs`, `Web/Pages/Shared/` |
-| **Dev A** | `Services/Documents/`, `Data/Repositories/{Documents,Files,Vectors}/`, `Data/Registration/IngestionRepositoryRegistration.cs`, `Services/Registration/IngestionServiceRegistration.cs`, `Web/Pages/Documents/`, `Web/Hubs/` |
-| **Dev B** | `Services/{Retrieval,Questions,TurnLog}/`, `Data/Repositories/{Questions,Turns}/`, các file `Question*` / `TurnLog*` trong `Registration/`, `Web/Pages/{Questions,Logs}/` |
-| **Dev C** | `Services/Interview/`, `Data/Repositories/Sessions/`, các file `Engine*` trong `Registration/`, phần handler/API của `Web/Pages/Interview/Room.cshtml.cs` |
+| **M** | `Common/`, `DAL/AppDbContext.cs`, `DAL/Entities/`, `DAL/Migrations/`, `DAL/Registration/SharedClientsRegistration.cs`, `DAL/Registration/SharedRepositoryRegistration.cs`, `Web/Program.cs`, `Web/Pages/Shared/` |
+| **Dev A** | `BLL/Documents/`, `DAL/Repositories/{Documents,Files,Vectors}/`, `DAL/Registration/IngestionRepositoryRegistration.cs`, `BLL/Registration/IngestionServiceRegistration.cs`, `Web/Pages/Documents/`, `Web/Hubs/` |
+| **Dev B** | `BLL/{Retrieval,Questions,TurnLog}/`, `DAL/Repositories/{Questions,Turns}/`, các file `Question*` / `TurnLog*` trong `Registration/`, `Web/Pages/{Questions,Logs}/` |
+| **Dev C** | `BLL/Interview/`, `DAL/Repositories/Sessions/`, các file `Engine*` trong `Registration/`, phần handler/API của `Web/Pages/Interview/Room.cshtml.cs` |
 | **Dev D** | `Web/Pages/{Index,Sessions,Interview}/` (phần giao diện), `Web/wwwroot/` |
 
 Khi hai người cùng cần một file ngoài vùng của mình, báo M trước.

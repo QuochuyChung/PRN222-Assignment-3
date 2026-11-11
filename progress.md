@@ -20,7 +20,7 @@ Ghi lỗi/blocker ở đây (M ghi lỗi phát hiện khi chạy Real trên clus
 
 | ID | Việc | Trạng thái | PR | Cập nhật | Ghi chú |
 |---|---|---|---|---|---|
-| BASE-01 | Solution + cấu trúc project (3 lớp) | Review | | 2026-11-09 | `Web → Services → Data → Common` + tests |
+| BASE-01 | Solution + cấu trúc project (3 lớp) | Review | | 2026-11-09 | `Web → BLL → DAL → Common` + tests |
 | BASE-02 | Entity, DbContext, migration đầu | Review | | 2026-11-09 | Migration `InitialCreate` (SQL Server), `TurnId` là khóa chính |
 | BASE-03 | Interface và model dùng chung | Review | | 2026-11-09 | Xem Phụ lục A của tasks.md |
 | BASE-04 | DI Fake/Real theo `Infra:Mode`, chọn phần chạy theo `ROLE` | Review | | 2026-11-09 | `AddData` / `AddServices` |

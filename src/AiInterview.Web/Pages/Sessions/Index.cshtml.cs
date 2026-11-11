@@ -1,5 +1,5 @@
 using AiInterview.Common.Enums;
-using AiInterview.Services.Interview;
+using AiInterview.BLL.Interview;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -7,7 +7,7 @@ namespace AiInterview.Web.Pages.Sessions;
 
 /// <summary>
 /// Quản lý danh sách phiên thi và tạo mới phiên thi (Dev D - UI-02).
-/// Tuân thủ kiến trúc 3 lớp: Chỉ inject và gọi Service, không tham chiếu Data.
+/// Tuân thủ kiến trúc 3 lớp: Chỉ inject và gọi Service, không tham chiếu DAL.
 /// </summary>
 public class IndexModel(IInterviewSessionService sessionService) : PageModel
 {

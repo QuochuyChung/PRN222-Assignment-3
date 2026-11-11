@@ -1,5 +1,5 @@
-using AiInterview.Data.Repositories.Ai;
-using AiInterview.Services.Interview;
+using AiInterview.DAL.Repositories.Ai;
+using AiInterview.BLL.Interview;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AiInterview.Tests.Services;
@@ -23,7 +23,7 @@ public class FollowUpDeciderResilienceTests
         "mỗi trang có một PageModel",
         0,
         2,
-        Array.Empty<AiInterview.Services.Retrieval.RetrievedChunk>());
+        Array.Empty<AiInterview.BLL.Retrieval.RetrievedChunk>());
 
     [Fact]
     public async Task Http_Failure_Is_Treated_As_Answer_Is_Good_Enough()

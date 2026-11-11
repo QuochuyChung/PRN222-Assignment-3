@@ -1,4 +1,4 @@
-using AiInterview.Services.Documents;
+using AiInterview.BLL.Documents;
 using AiInterview.Web.Hubs;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;

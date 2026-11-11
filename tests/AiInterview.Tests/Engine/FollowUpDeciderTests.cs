@@ -1,6 +1,6 @@
-using AiInterview.Data.Repositories.Ai;
-using AiInterview.Services.Interview;
-using AiInterview.Services.Retrieval;
+using AiInterview.DAL.Repositories.Ai;
+using AiInterview.BLL.Interview;
+using AiInterview.BLL.Retrieval;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AiInterview.Tests.Engine;

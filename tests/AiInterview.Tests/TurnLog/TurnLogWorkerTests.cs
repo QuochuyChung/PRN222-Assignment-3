@@ -1,7 +1,7 @@
 using AiInterview.Common.Constants;
-using AiInterview.Data.Repositories.Queue;
-using AiInterview.Services.Interview;
-using AiInterview.Services.TurnLog;
+using AiInterview.DAL.Repositories.Queue;
+using AiInterview.BLL.Interview;
+using AiInterview.BLL.TurnLog;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 

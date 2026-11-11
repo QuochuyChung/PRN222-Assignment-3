@@ -1,7 +1,7 @@
 using AiInterview.Common.Enums;
-using AiInterview.Data.Repositories.Questions;
-using AiInterview.Data.Seeding;
-using AiInterview.Services.Interview;
+using AiInterview.DAL.Repositories.Questions;
+using AiInterview.DAL.Seeding;
+using AiInterview.BLL.Interview;
 using Microsoft.EntityFrameworkCore;
 
 namespace AiInterview.Tests.Engine;

@@ -1,6 +1,6 @@
 using AiInterview.Common.Enums;
-using AiInterview.Data.Repositories.Ai;
-using AiInterview.Services.Interview;
+using AiInterview.DAL.Repositories.Ai;
+using AiInterview.BLL.Interview;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AiInterview.Tests.Engine;

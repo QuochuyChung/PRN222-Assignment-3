@@ -1,5 +1,5 @@
 using AiInterview.Common.Enums;
-using AiInterview.Services.Documents;
+using AiInterview.BLL.Documents;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;

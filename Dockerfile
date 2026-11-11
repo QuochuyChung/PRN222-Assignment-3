@@ -7,8 +7,8 @@ WORKDIR /src
 # Copy riêng các file csproj trước để cache bước restore khi chỉ đổi mã nguồn.
 COPY global.json AiInterview.sln ./
 COPY src/AiInterview.Common/AiInterview.Common.csproj src/AiInterview.Common/
-COPY src/AiInterview.Data/AiInterview.Data.csproj src/AiInterview.Data/
-COPY src/AiInterview.Services/AiInterview.Services.csproj src/AiInterview.Services/
+COPY src/AiInterview.DAL/AiInterview.DAL.csproj src/AiInterview.DAL/
+COPY src/AiInterview.BLL/AiInterview.BLL.csproj src/AiInterview.BLL/
 COPY src/AiInterview.Web/AiInterview.Web.csproj src/AiInterview.Web/
 COPY tests/AiInterview.Tests/AiInterview.Tests.csproj tests/AiInterview.Tests/
 RUN dotnet restore AiInterview.sln

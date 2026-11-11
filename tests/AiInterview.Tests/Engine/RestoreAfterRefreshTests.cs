@@ -1,5 +1,5 @@
 using AiInterview.Common.Enums;
-using AiInterview.Services.Interview;
+using AiInterview.BLL.Interview;
 
 namespace AiInterview.Tests.Engine;
 

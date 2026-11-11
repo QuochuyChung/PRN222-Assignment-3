@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiInterview.Tests", "tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiInterview.Common", "src\AiInterview.Common\AiInterview.Common.csproj", "{03FDBB62-AE94-4644-BE99-0FF996DF8DA6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiInterview.Data", "src\AiInterview.Data\AiInterview.Data.csproj", "{E13BA01C-E7A2-4F7C-8BA5-9CBC42B3B4CB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiInterview.DAL", "src\AiInterview.DAL\AiInterview.DAL.csproj", "{E13BA01C-E7A2-4F7C-8BA5-9CBC42B3B4CB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiInterview.Services", "src\AiInterview.Services\AiInterview.Services.csproj", "{5675AEDE-94CA-432F-BD41-4FB56BF83597}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AiInterview.BLL", "src\AiInterview.BLL\AiInterview.BLL.csproj", "{5675AEDE-94CA-432F-BD41-4FB56BF83597}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

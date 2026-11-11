@@ -1,6 +1,6 @@
 using AiInterview.Common.Enums;
-using AiInterview.Data.Repositories.Sessions;
-using AiInterview.Data.Models;
+using AiInterview.DAL.Repositories.Sessions;
+using AiInterview.DAL.Models;
 
 namespace AiInterview.Tests.Engine;
 

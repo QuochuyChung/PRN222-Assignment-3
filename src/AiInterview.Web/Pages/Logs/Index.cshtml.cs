@@ -1,4 +1,4 @@
-using AiInterview.Services.TurnLog;
+using AiInterview.BLL.TurnLog;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AiInterview.Web.Pages.Logs;

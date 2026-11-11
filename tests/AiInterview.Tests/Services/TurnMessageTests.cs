@@ -1,4 +1,4 @@
-using AiInterview.Services.Interview;
+using AiInterview.BLL.Interview;
 
 namespace AiInterview.Tests.Services;
 

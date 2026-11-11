@@ -1,6 +1,6 @@
 using AiInterview.Common.Configuration;
-using AiInterview.Data.Repositories.Ai;
-using AiInterview.Services.Documents;
+using AiInterview.DAL.Repositories.Ai;
+using AiInterview.BLL.Documents;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 

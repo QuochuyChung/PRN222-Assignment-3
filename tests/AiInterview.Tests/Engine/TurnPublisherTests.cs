@@ -1,6 +1,6 @@
 using AiInterview.Common.Constants;
-using AiInterview.Data.Repositories.Queue;
-using AiInterview.Services.Interview;
+using AiInterview.DAL.Repositories.Queue;
+using AiInterview.BLL.Interview;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AiInterview.Tests.Engine;
@@ -89,13 +89,13 @@ public class TurnPublisherTests
         public Task<string> PublishAsync(string stream, IReadOnlyDictionary<string, string> fields, CancellationToken ct = default)
             => throw new InvalidOperationException("Redis is down");
 
-        public Task<IReadOnlyList<Data.Models.QueueMessage>> ReadAsync(string stream, string group, string consumer, int count, CancellationToken ct = default)
+        public Task<IReadOnlyList<DAL.Models.QueueMessage>> ReadAsync(string stream, string group, string consumer, int count, CancellationToken ct = default)
             => throw new NotSupportedException();
 
         public Task AckAsync(string stream, string group, string messageId, CancellationToken ct = default)
             => throw new NotSupportedException();
 
-        public Task DeadLetterAsync(string stream, string group, Data.Models.QueueMessage message, string reason, CancellationToken ct = default)
+        public Task DeadLetterAsync(string stream, string group, DAL.Models.QueueMessage message, string reason, CancellationToken ct = default)
             => throw new NotSupportedException();
     }
 }

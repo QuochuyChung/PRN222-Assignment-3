@@ -1,5 +1,5 @@
 using AiInterview.Common.Logging;
-using AiInterview.Services.Documents;
+using AiInterview.BLL.Documents;
 using Microsoft.AspNetCore.SignalR;
 
 namespace AiInterview.Web.Hubs;

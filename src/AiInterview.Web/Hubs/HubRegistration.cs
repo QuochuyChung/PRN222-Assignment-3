@@ -1,4 +1,4 @@
-using AiInterview.Services.Documents;
+using AiInterview.BLL.Documents;
 
 namespace AiInterview.Web.Hubs;
 
@@ -7,7 +7,7 @@ public static class HubRegistration
 {
     public static IServiceCollection AddHubServices(this IServiceCollection services)
     {
-        // Registered after AddServices, so it replaces the no-op notifier from the Services layer.
+        // Registered after AddServices, so it replaces the no-op notifier from the BLL layer.
         services.AddSingleton<IDocumentProgressNotifier, SignalRDocumentProgressNotifier>();
         return services;
     }

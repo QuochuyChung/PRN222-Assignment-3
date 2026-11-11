@@ -47,25 +47,25 @@ Luật cứng (hết giờ, hết số lượt xoáy) do **server quyết địn
 
 ```
 Pages/*.cshtml.cs (PageModel)  →  Service  →  Repository  →  SQL / Mongo / Qdrant / Redis / MinIO / Gemini
-   AiInterview.Web              AiInterview.Services       AiInterview.Data
+   AiInterview.Web              AiInterview.BLL       AiInterview.DAL
 ```
 
 | Project | Vai trò | Quy tắc |
 |---|---|---|
 | `AiInterview.Web` | Razor Pages + code-behind (PageModel), SignalR hub, `Program.cs` | PageModel chỉ nhận request, gọi **Service**, trả view. **Không** gọi repository, không chứa logic nghiệp vụ |
-| `AiInterview.Services` | Logic nghiệp vụ: prompt, state machine, luật cứng, chunking, điều phối pipeline | Chỉ phụ thuộc **interface repository**. Giống nhau ở cả Fake và Real |
-| `AiInterview.Data` | Entity, `DbContext`, Repository (interface + bản Fake + bản Real) | Mọi lời gọi ra ngoài (SQL, Mongo, Qdrant, Redis, MinIO, **cả Gemini**) nằm ở đây |
+| `AiInterview.BLL` | Logic nghiệp vụ: prompt, state machine, luật cứng, chunking, điều phối pipeline | Chỉ phụ thuộc **interface repository**. Giống nhau ở cả Fake và Real |
+| `AiInterview.DAL` | Entity, `DbContext`, Repository (interface + bản Fake + bản Real) | Mọi lời gọi ra ngoài (SQL, Mongo, Qdrant, Redis, MinIO, **cả Gemini**) nằm ở đây |
 | `AiInterview.Common` | Options, hằng số (tên stream, key Redis), helper log | Không chứa logic nghiệp vụ |
 
-Phụ thuộc một chiều: `Web → Services → Data → Common`. Ví dụ: `Pages/Index.cshtml.cs` → `IDashboardService` → `IQuestionRepository` / `ISessionRepository`...
+Phụ thuộc một chiều: `Web → BLL → DAL → Common`. Ví dụ: `Pages/Index.cshtml.cs` → `IDashboardService` → `IQuestionRepository` / `ISessionRepository`...
 
 **Ranh giới được khóa bằng máy (không thể lách):**
 
-- **Web không nhìn thấy Data.** `Services.csproj` tham chiếu Data với `PrivateAssets="compile"`; viết `using AiInterview.Data...` trong Web là lỗi biên dịch. Web chỉ ráp ứng dụng qua `AddServices(...)` / `InitializeApplicationAsync(...)`.
-- **Service trả DTO, không trả entity.** `QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`... nằm trong `AiInterview.Services`; entity/model của Data (`Question`, `InterviewTurn`, `DocumentRecord`...) không lộ ra ngoài Services. Map bằng `Services/Mapping/EntityMappers.cs`.
+- **Web không nhìn thấy DAL.** `AiInterview.BLL.csproj` tham chiếu DAL với `PrivateAssets="compile"`; viết `using AiInterview.DAL...` trong Web là lỗi biên dịch. Web chỉ ráp ứng dụng qua `AddServices(...)` / `InitializeApplicationAsync(...)`.
+- **Service trả DTO, không trả entity.** `QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`... nằm trong `AiInterview.BLL`; entity/model của DAL (`Question`, `InterviewTurn`, `DocumentRecord`...) không lộ ra ngoài BLL. Map bằng `BLL/Mapping/EntityMappers.cs`.
 - **Enum dùng chung ở `AiInterview.Common.Enums`:** `QuestionStatus`, `BloomLevel`, `SessionStatus`, `InterviewState`, `DocumentStatus`.
 - **Cài đặt service là `internal sealed`**; chỉ interface và DTO là `public`.
-- **Architecture test** (`tests/AiInterview.Tests/Architecture`) làm `dotnet test` đỏ nếu: Web tham chiếu Data; Data tham chiếu ngược Services/Web; Services tham chiếu Web; API public của Services lộ kiểu của Data; PageModel dùng repository. Test đỏ thì sửa code, không sửa test.
+- **Architecture test** (`tests/AiInterview.Tests/Architecture`) làm `dotnet test` đỏ nếu: Web tham chiếu DAL; DAL tham chiếu ngược BLL/Web; BLL tham chiếu Web; API public của BLL lộ kiểu của DAL; PageModel dùng repository. Test đỏ thì sửa code, không sửa test.
 
 ---
 
@@ -89,7 +89,7 @@ Infra:Mode = Real   → K8s: kết nối hạ tầng thật
 
 Mỗi người viết seed/test cho module mình (liệt kê trong từng task). Mục tiêu: chạy ở chế độ Fake được ngay, không phụ thuộc người khác.
 
-- **Seed SQL** (câu hỏi, phiên thi...): viết class `IDataSeeder` (mẫu: `SampleDataSeeder` trong `AiInterview.Data/Seeding`), đăng ký trong `Registration/*RepositoryRegistration.cs` của module, chỉ khi `infra.IsFake`.
+- **Seed SQL** (câu hỏi, phiên thi...): viết class `IDataSeeder` (mẫu: `SampleDataSeeder` trong `AiInterview.DAL/Seeding`), đăng ký trong `Registration/*RepositoryRegistration.cs` của module, chỉ khi `infra.IsFake`.
 - **Dữ liệu mẫu khác** (file PPTX/PDF/DOCX, transcript mẫu...): đặt trong thư mục `seed/<module>/` ở gốc repo.
 - **Test**: đặt trong `tests/AiInterview.Tests/<Module>/`, chạy bằng `dotnet test`.
 
@@ -291,7 +291,7 @@ Giai đoạn 3             Triển khai K8s đầy đủ, sửa lỗi, kịch b�
 
 Nguồn gốc là code trong repo; phần này chỉ tóm tắt. Muốn đổi interface phải báo M.
 
-**Repository** — `AiInterview.Data/Repositories/*` (mọi lời gọi hạ tầng ngoài nằm ở đây, kể cả Gemini)
+**Repository** — `AiInterview.DAL/Repositories/*` (mọi lời gọi hạ tầng ngoài nằm ở đây, kể cả Gemini)
 
 | Interface | Real | Fake | Người làm |
 |---|---|---|---|
@@ -306,7 +306,7 @@ Nguồn gốc là code trong repo; phần này chỉ tóm tắt. Muốn đổi i
 | `ISessionStateRepository` (Get/Save/TryLock/Delete) | Redis Hash | In-memory | Dev C |
 | `IMessageQueueRepository` (EnsureGroup/Publish/Read/Ack/DeadLetter) | Redis Streams | In-memory | Dev A + Dev B (dùng chung) |
 
-**Service** — `AiInterview.Services/*` (logic nghiệp vụ, giống nhau ở Fake và Real)
+**Service** — `AiInterview.BLL/*` (logic nghiệp vụ, giống nhau ở Fake và Real)
 
 | Interface | Việc | Người làm |
 |---|---|---|
@@ -321,9 +321,9 @@ Nguồn gốc là code trong repo; phần này chỉ tóm tắt. Muốn đổi i
 | `IFollowUpDecider` | Quyết định hỏi xoáy (prompt + gọi `ILlmRepository`) | Dev C |
 | `ITurnPublisher` + `TurnMessage` | Đẩy lượt vào `turns-stream`; `TurnMessage` có sẵn `ToFields()` / `FromFields()` / `ToEntity()` để publisher và consumer không lệch định dạng | Dev C (publisher), Dev B (consumer) |
 
-**Luồng gọi:** `PageModel` (`*.cshtml.cs`) → `Service` → `Repository`. PageModel không gọi repository trực tiếp, và không thể: Web không tham chiếu được Data.
+**Luồng gọi:** `PageModel` (`*.cshtml.cs`) → `Service` → `Repository`. PageModel không gọi repository trực tiếp, và không thể: Web không tham chiếu được DAL.
 
-**DTO của Service** (trả cho Web): `DocumentDto` (`IDocumentService`), `QuestionDto` + `UpdateQuestionRequest` (`IQuestionService`), `SessionDto` + `InterviewStateView` (`IInterviewSessionService`), `TurnDto` (`ITurnLogService`), `DashboardSummary` (`IDashboardService`). `TurnMessage.ToEntity()` là `internal` vì trả entity của Data.
+**DTO của Service** (trả cho Web): `DocumentDto` (`IDocumentService`), `QuestionDto` + `UpdateQuestionRequest` (`IQuestionService`), `SessionDto` + `InterviewStateView` (`IInterviewSessionService`), `TurnDto` (`ITurnLogService`), `DashboardSummary` (`IDashboardService`). `TurnMessage.ToEntity()` là `internal` vì trả entity của DAL.
 
 ## Phụ lục B — Định dạng dữ liệu
 

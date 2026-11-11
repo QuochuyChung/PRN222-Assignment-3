@@ -4,7 +4,7 @@
 
 ## Kiến trúc 3 lớp (bắt buộc)
 
-`PageModel (*.cshtml.cs)` → `Service` → `Repository`. Phụ thuộc một chiều: `Web → Services → Data → Common`.
+`PageModel (*.cshtml.cs)` → `Service` → `Repository`. Phụ thuộc một chiều: `Web → BLL → DAL → Common`.
 
 - PageModel **chỉ** gọi Service (inject interface qua constructor), không gọi repository, không chứa logic nghiệp vụ.
 - Service chỉ phụ thuộc **interface** repository, giống nhau ở Fake và Real.
@@ -13,17 +13,17 @@
 
 ### Ranh giới được khóa bằng máy (đừng cố lách)
 
-- **`AiInterview.Web` không nhìn thấy `AiInterview.Data`** (`Services.csproj` tham chiếu Data với `PrivateAssets="compile"`). Viết `using AiInterview.Data...` trong Web sẽ lỗi biên dịch. Đừng đổi tham chiếu project để "cho chạy".
-- **Service trả DTO** (`QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`...), **không bao giờ trả entity/model của Data** (`Question`, `InterviewTurn`, `DocumentRecord`...). Map bằng `Services/Mapping/EntityMappers.cs`.
+- **`AiInterview.Web` không nhìn thấy `AiInterview.DAL`** (`AiInterview.BLL.csproj` tham chiếu DAL với `PrivateAssets="compile"`). Viết `using AiInterview.DAL...` trong Web sẽ lỗi biên dịch. Đừng đổi tham chiếu project để "cho chạy".
+- **Service trả DTO** (`QuestionDto`, `SessionDto`, `TurnDto`, `DocumentDto`...), **không bao giờ trả entity/model của DAL** (`Question`, `InterviewTurn`, `DocumentRecord`...). Map bằng `BLL/Mapping/EntityMappers.cs`.
 - **Enum dùng chung** (`QuestionStatus`, `BloomLevel`, `SessionStatus`, `InterviewState`, `DocumentStatus`) nằm ở `AiInterview.Common.Enums`, mọi lớp dùng được.
 - **Cài đặt service là `internal sealed`**, chỉ interface và DTO là `public`. Test truy cập được nhờ `InternalsVisibleTo`.
-- Web ráp ứng dụng chỉ qua `AddServices(...)` và `InitializeApplicationAsync(...)`; lớp Data được đăng ký bên trong Services.
+- Web ráp ứng dụng chỉ qua `AddServices(...)` và `InitializeApplicationAsync(...)`; lớp DAL được đăng ký bên trong BLL.
 - `tests/AiInterview.Tests/Architecture/ArchitectureTests.cs` kiểm tra các luật trên. Test đỏ nghĩa là bạn đã phá ranh giới — sửa code, **không sửa test**.
 
 ## Fake / Real
 
 - `Infra:Mode=Fake` là mặc định ở máy dev: không cần Redis/Mongo/Qdrant/MinIO/Gemini thật. Phải chạy được `dotnet run --project src/AiInterview.Web` và `dotnet test` ở chế độ này.
-- Task của bạn chỉ xong khi có **cả bản Fake và bản Real** của repository trong phạm vi task, đăng ký trong `Data/Registration/*RepositoryRegistration.cs`.
+- Task của bạn chỉ xong khi có **cả bản Fake và bản Real** của repository trong phạm vi task, đăng ký trong `DAL/Registration/*RepositoryRegistration.cs`.
 - Bản Real không chạy được trên máy dev (hạ tầng ở cluster của M). Nó phải biên dịch được, có log rõ ràng; M sẽ kiểm chứng và ghi lỗi vào `progress.md`.
 - Service là `Scoped`. Worker (`BackgroundService`) là singleton: lấy service qua `IServiceScopeFactory`.
 

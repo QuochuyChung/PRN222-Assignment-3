@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AiInterview.Common\AiInterview.Common.csproj" />
+
+    <!-- PrivateAssets="compile": Data is used ONLY inside Services. Projects that reference Services (e.g. Web)
+         do NOT see Data at compile time, so a PageModel cannot call a repository even on purpose. -->
+    <ProjectReference Include="..\AiInterview.DAL\AiInterview.DAL.csproj" PrivateAssets="compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AiInterview.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -14,7 +14,7 @@
   <!-- Web chỉ tham chiếu Services và Common. KHÔNG tham chiếu Data (và Services cũng không cho lộ Data ra). -->
   <ItemGroup>
     <ProjectReference Include="..\AiInterview.Common\AiInterview.Common.csproj" />
-    <ProjectReference Include="..\AiInterview.Services\AiInterview.Services.csproj" />
+    <ProjectReference Include="..\AiInterview.BLL\AiInterview.BLL.csproj" />
   </ItemGroup>
 
 </Project>

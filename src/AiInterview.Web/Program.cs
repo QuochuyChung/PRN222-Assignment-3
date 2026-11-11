@@ -1,7 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using AiInterview.Common.Configuration;
-using AiInterview.Services.Registration;
+using AiInterview.BLL.Registration;
 using AiInterview.Web.Hubs;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -70,7 +70,7 @@ if (infra.RunsWeb)
     app.MapHubs();
 }
 
-// Kubernetes probes: live = process is up, ready = SQL is reachable (check registered in the Data layer).
+// Kubernetes probes: live = process is up, ready = SQL is reachable (check registered in the DAL layer).
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 

@@ -1,6 +1,6 @@
 using AiInterview.Common.Enums;
-using AiInterview.Services.Documents;
-using AiInterview.Services.Questions;
+using AiInterview.BLL.Documents;
+using AiInterview.BLL.Questions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
